@@ -1,77 +1,131 @@
-import { useState } from "react";
+import { use, useContext, useEffect, useState } from "react";
 import { doctorSpecialities } from "../../generalData/doctorSpecialities";
-import {doctorSpecialityAssets} from "../../assets/specialityofdoctor/assets.js"
+import { doctorSpecialityAssets } from "../../assets/specialityofdoctor/assets.js"
+import { toast } from 'react-toastify'
 
 
-export default  function Appointment(){
-  const [selectedSpeciality,setSelectedSpeciality] = useState("");
-  const changeSelectedSpeciality = (speciality)=>{
-    setSelectedSpeciality(speciality)
 
-  }
-  return(
+//maps imports
+
+import { APIProvider, Map } from '@vis.gl/react-google-maps';
+import ShowHospitalMap from "../smallComponents/ShowHospitalMap.jsx";
+import axios from "axios";
+import { PatientContext } from "../../contexts/PatientContext.jsx";
+import ShowHospitalList from "../smallComponents/showHospitalList.jsx";
+
+
+export default function Appointment() {
+  const { speciality, setSpeciality ,addressAndDetailsArray,setAddressAndDetailsArray} = useContext(PatientContext)
+
+  useEffect(()=>{
+    setSpeciality("")
+    setAddressAndDetailsArray("")
+
+  },[])
+
+  
+  return (
     <>
-    {
-    !selectedSpeciality
-    ? <ShowSpecialityList value={setSelectedSpeciality}/>
-    : <ShowHospitalList value={selectedSpeciality}/>
+      {
+        !speciality
+          ? <ShowSpecialityList  />
+          : <ShowMapAndHospitalList  />
+        // : <ShowHospitalList value={selectedSpeciality} />
+
+      }
+    </>
+  )
+}
+
+
+function ShowMapAndHospitalList(props) {
+
+  const { getHospitalsAddress, addressAndDetailsArray, setAddressAndDetailsArray ,speciality,setSpeciality} = useContext(PatientContext)
+
+
+  console.log(addressAndDetailsArray, "************in appointment ")
+
+  return (
     
+    <>{speciality && addressAndDetailsArray?.length 
+      ? <>
+      <ShowHospitalList/>
+
+      <ShowMap />
+      
+      </>
+      
+      : <> <div className="bg-gray-900/70 backdrop-blur-md border border-gray-800/80 rounded-2xl shadow-xl shadow-black/40 p-5 md:p-6 m-auto">
+          <div className="max-w-2xl mx-auto">
+             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
+              No Hospital Available for this IPD
+            </h2>
+            
+          </div>
+        </div>
+</>
     }
     </>
   )
 }
 
 
-function ShowHospitalList (props){
-  
+function ShowMap() {
+  const { addressAndDetailsArray, setAddressAndDetailsArray } = useContext(PatientContext)
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  console.log("****************in showmap is ", addressAndDetailsArray)
+  if (!apiKey) {
+    return <div style={{ padding: '2rem', color: 'red' }}>Missing API key in .env</div>;
+  }
 
   return (
-    <>
-    {props.value}
-    </>
-  )
+    <div className="w-[800px] h-[750px] bg-gray-900/70 backdrop-blur-md border border-gray-800/80 rounded-2xl shadow-xl shadow-black/40 p-2 md:p-6">
+      <APIProvider apiKey={apiKey} region="IN" language="en">
+        <ShowHospitalMap  >
+
+        </ShowHospitalMap>
+      </APIProvider>
+    </div>
+  );
+
 }
 
-
- function ShowSpecialityList(props) {
+function ShowSpecialityList(props) {
   const [searchTerm, setSearchTerm] = useState("");
+  const { setSpeciality } = useContext(PatientContext)
 
-  const selectDoctorSpecialityHandler = async (speciality)=>{
-  console.log(speciality)
-  props.value(speciality)
 
-}
 
   // Filter specialties based on search (case-insensitive)
-  const filteredSpecialities = doctorSpecialities.filter((specialty) =>
-    specialty.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSpecialities = doctorSpecialities.filter((speciality) =>
+    speciality.toLowerCase().includes(searchTerm.toLowerCase())
   );
   return (
-    
+
     <div className="bg-[var(--color-primary)] text-white min-h-screen py-10 px-5 md:px-8 h-[700px] overflow-y-scroll no-scrollbar lg:w-full">
       <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
-              Our OPD Specialities
-            </h2>
-            
-          </div>
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
+          Our OPD Specialities
+        </h2>
+
+      </div>
       <div className="max-w-7xl mx-auto space-y-10">
 
 
         {/* Search Bar Container */}
         <div className="bg-gray-900/70 backdrop-blur-md border border-gray-800/80 rounded-2xl shadow-xl shadow-black/40 p-5 md:p-6">
           <div className="max-w-2xl mx-auto">
-            
+
             <div className="relative">
               <input
                 id="search"
-                onChange={(e)=>setSearchTerm(e.target.value)}
-                value ={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchTerm}
                 type="text"
                 placeholder="e.g. Paediatrics, Neurology, Dermatology..."
                 className="w-full bg-gray-800/80 border border-gray-700 text-white placeholder-gray-400 rounded-xl pl-5 pr-12 py-4 focus:outline-none focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all text-lg"
               />
-              <button 
+              <button
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-secondary)] hover:text-blue-300 transition-colors"
                 aria-label="Search"
               >
@@ -85,20 +139,20 @@ function ShowHospitalList (props){
 
         {/* Specialties Container */}
         <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/70 rounded-2xl shadow-2xl shadow-black/50 p-6 md:p-8 lg:p-10">
-          
+
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">
             {filteredSpecialities.map((specialty) => (
-              <div 
-                key={specialty} 
+              <div
+                key={specialty}
                 className="flex flex-col items-center group"
-                onClick={()=>selectDoctorSpecialityHandler(specialty)}
+                onClick={() => setSpeciality(specialty)}
               >
                 <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-[var(--color-secondary)]/30 group-hover:border-[var(--color-secondary)] transition-all duration-300 shadow-lg shadow-black/40 bg-gray-800 flex items-center justify-center ring-1 ring-gray-700/50 group-hover:ring-[var(--color-secondary)]/40">
-                  {console.log(`${specialty.toLowerCase().replace(/\s+/g,"")}Icon`)}
-                  <img 
-                    src={doctorSpecialityAssets[`${specialty.toLowerCase()}Icon`] || doctorSpecialityAssets['defaultIcon']} 
-                    
+                  {/* {console.log(`${specialty.toLowerCase().replace(/\s+/g, "")}Icon`)} */}
+                  <img
+                    src={doctorSpecialityAssets[`${specialty.toLowerCase()}Icon`] || doctorSpecialityAssets['defaultIcon']}
+
                     alt={specialty}
                     className="w-full h-full object-cover"
                   />

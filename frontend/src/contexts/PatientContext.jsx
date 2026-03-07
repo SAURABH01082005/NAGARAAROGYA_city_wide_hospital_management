@@ -9,6 +9,9 @@ const PatientContext = createContext();
 const PatientContextProvider = (props) => {
     const [pToken, setPToken] = useState(localStorage.getItem('pToken') ? localStorage.getItem('pToken') : "");
     const [patientData, setPatientData] = useState()
+    const [addressAndDetailsArray, setAddressAndDetailsArray] = useState([])
+    const [addressTimeDateAndDetailsArray, setAddressTimeDateAndDetailsArray] = useState([])
+    const [speciality, setSpeciality] = useState()
 
     const getPatientDetails = async () => {
         const { data } = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/patient/get-patientdetails`, { headers: { ptoken: pToken } })
@@ -18,6 +21,26 @@ const PatientContextProvider = (props) => {
 
 
     }
+
+    const getHospitalsAddress = async () => {
+        try {
+
+            const { data } = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/general/specialities-available-and-address`, { speciality: speciality })
+            console.log("********************testing*************", data)
+            setAddressAndDetailsArray(data.data)
+
+        } catch (err) {
+            toast.error(err.message)
+
+        }
+    }
+
+    useEffect(() => {
+        if (speciality){
+            setAddressAndDetailsArray()
+            getHospitalsAddress()
+        }
+    }, [speciality])
 
     useEffect(() => {
         if (pToken)
@@ -31,7 +54,9 @@ const PatientContextProvider = (props) => {
 
     const value = {
         pToken,
-        setPToken, patientData, getPatientDetails
+        setPToken, patientData, getPatientDetails, getHospitalsAddress, addressAndDetailsArray, setAddressAndDetailsArray,
+        speciality,setSpeciality,addressTimeDateAndDetailsArray,setAddressTimeDateAndDetailsArray,
+
     }
     return (
         <PatientContext.Provider value={value}>
