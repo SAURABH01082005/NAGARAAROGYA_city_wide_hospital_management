@@ -4,6 +4,7 @@ import connectDB from './config/mongodb.js';
 import patientRoute from './routes/patientRoute.js';
 import doctorRoute from './routes/doctorRoute.js';
 import adminRoute from './routes/adminRoute.js';
+import generalRoute from './routes/generalRoute.js';
 import cors from 'cors';
 
 dotenv.config();
@@ -25,6 +26,7 @@ app.use(cors());
 app.use("/api/patient", patientRoute)
 app.use("/api/doctor", doctorRoute)
 app.use("/api/admin", adminRoute)
+app.use("/api/general", generalRoute)
 
 //localhost:5000/
 

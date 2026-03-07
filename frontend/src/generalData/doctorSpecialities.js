@@ -1,0 +1,23 @@
+export const doctorSpecialities = [
+  "Medicine",
+  "General Physician",
+  "Surgery",
+  "Orthopaedics",
+  "Neurology",
+  "Neurosurgery",
+  "Nephrology",
+  "Endocrinology",
+  "Antenatal",
+  "Gynaecology",
+  "Gastroenterology",
+  "Paediatrics",
+  "Dermatology",
+  "Psychiatry",
+  "Ophthalmology",
+  "Chest Clinic",
+  "Medical Oncology",
+  "Radiation Oncology",
+  "Surgical Oncology",
+  "Palliative Oncology",
+  "Preventive Oncology"
+]

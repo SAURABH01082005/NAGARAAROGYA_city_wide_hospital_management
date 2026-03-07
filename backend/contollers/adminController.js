@@ -71,7 +71,7 @@ const deleteHospital = async (req,res)=>{
     }
 }
 
-
+//want to delete this 
 const getAdminDetails = (req,res)=>{
     const data ={
         name:process.env.ADMIN_EMAIL,
@@ -79,4 +79,9 @@ const getAdminDetails = (req,res)=>{
     res.json({success:true,data})
 
 }
+
+
+
+
+
 export { login, addHospital, getHospitals ,deleteHospital,getAdminDetails}

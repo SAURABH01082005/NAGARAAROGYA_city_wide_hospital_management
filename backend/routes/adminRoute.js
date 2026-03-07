@@ -8,6 +8,6 @@ adminRoute.post("/login",login)
 adminRoute.post("/add-hospital",authAdmin,addHospital)
 adminRoute.get("/hospitals",authAdmin,getHospitals)
 adminRoute.post("/delete-hospital",authAdmin,deleteHospital)
-adminRoute.get("/get-admindetails",getAdminDetails)
+adminRoute.get("/get-admindetails",authAdmin,getAdminDetails)
 
 export default adminRoute
