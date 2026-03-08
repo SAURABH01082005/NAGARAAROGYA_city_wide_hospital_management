@@ -24,7 +24,7 @@ const  getSpecialitiesAndAddress = async (req,res)=>{
             }
             // console.log(data.data," ->  ",speciality)
             if(data.data.specialities.some((s)=>s.toLowerCase()==speciality.toLowerCase()))
-                return {name:hospitalData.name,id:hospitalData.hospitalId,address:data.data.hospitalAddress}
+                return {name:hospitalData.name,id:hospitalData.hospitalId,address:data.data.hospitalAddress,appointmentPage : data.data.appointmentPage}
             }catch(err){
                 // console.log(hospitalData.url + "/specialities-available-and-address" , " is  inactive")
                 
@@ -34,7 +34,7 @@ const  getSpecialitiesAndAddress = async (req,res)=>{
 
         }))
         const ans2 = ans.filter(Boolean)//trick*************************************************** and don't use reduce for async mapping
-        console.log("ans is ",ans2)
+        // console.log("ans is ",ans2)
         res.json({success:true,data:ans2}) //data is an array of {spiciality and address}
 
 

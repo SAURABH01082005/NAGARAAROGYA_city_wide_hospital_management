@@ -1,6 +1,6 @@
 export const doctorSpecialities = [
   "Medicine",
-  "General Physician",
+  "General physician",
   "Surgery",
   "Orthopaedics",
   "Neurology",

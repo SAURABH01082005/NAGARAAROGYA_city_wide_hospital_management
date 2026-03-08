@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { getReport, getPatientDetails, login, register } from '../contollers/patientController.js';
+import { getReport, getPatientDetails, login, register, } from '../contollers/patientController.js';
 import authPatient from '../middlewares/authPatient.js';
 
 const patientRoute=express.Router();

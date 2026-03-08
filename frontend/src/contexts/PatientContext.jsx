@@ -26,7 +26,7 @@ const PatientContextProvider = (props) => {
         try {
 
             const { data } = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/general/specialities-available-and-address`, { speciality: speciality })
-            console.log("********************testing*************", data)
+            // console.log("********************testing data is *************", data)
             setAddressAndDetailsArray(data.data)
 
         } catch (err) {

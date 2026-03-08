@@ -43,7 +43,7 @@ function ShowMapAndHospitalList(props) {
   const { getHospitalsAddress, addressAndDetailsArray, setAddressAndDetailsArray ,speciality,setSpeciality} = useContext(PatientContext)
 
 
-  console.log(addressAndDetailsArray, "************in appointment ")
+  // console.log(addressAndDetailsArray, "************in appointment ")
 
   return (
     
@@ -71,9 +71,7 @@ function ShowMapAndHospitalList(props) {
 
 
 function ShowMap() {
-  const { addressAndDetailsArray, setAddressAndDetailsArray } = useContext(PatientContext)
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  console.log("****************in showmap is ", addressAndDetailsArray)
   if (!apiKey) {
     return <div style={{ padding: '2rem', color: 'red' }}>Missing API key in .env</div>;
   }

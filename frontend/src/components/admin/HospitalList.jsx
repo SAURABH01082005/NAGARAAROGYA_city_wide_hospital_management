@@ -1,10 +1,12 @@
 // components/HospitalList.js
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Building, Mail, Globe, Eye, Edit, Trash2, Search } from 'lucide-react';
 import axios from 'axios';
+import { AdminContext } from '../../contexts/AdminContext';
 import { toast } from 'react-toastify';
 
 export default function HospitalList() {
+  const {aToken } = useContext(AdminContext)
   const [searchTerm, setSearchTerm] = useState('');
   const [hospitals, setHospitals] = useState([]);
 
@@ -12,7 +14,7 @@ export default function HospitalList() {
 
   const getHospitals = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/admin/hospitals`, { headers: { atoken: localStorage.getItem("atoken") } });
+      const { data } = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/admin/hospitals`, { headers: { atoken: aToken } });
       if (!data.success) {
         return toast.error(data.message || "Failed to fetch hospitals");
       }
@@ -35,7 +37,7 @@ export default function HospitalList() {
         return { ...element, status: 'Active' }
       
       }catch(err){
-        return { ...element, status: "InActive" }
+        return { ...element, status: "Inactive" }
         
       }
     }))
@@ -45,7 +47,7 @@ export default function HospitalList() {
   }
   const deleteHsopitalHandler = async (hospitalId)=>{
     try{
-      const {data} = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/admin/delete-hospital`,{hospitalId} ,{ headers: { atoken: localStorage.getItem("atoken") } });
+      const {data} = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/admin/delete-hospital`,{hospitalId} ,{ headers: { atoken: aToken } });
       if(data.success){
         const temp = hospitals.filter((element)=> (element.hospitalId!==hospitalId))
         setHospitals(temp)
@@ -65,12 +67,15 @@ export default function HospitalList() {
 
   useEffect(() => {
     const loadData = async ()=>{
+      console.log("loadData is calling...")
 
       setHospitals( await getHospitals())
+      console.log("laodData is called.........")
     }
     loadData();
 
   }, [])
+  console.log("before filter is ",hospitals)
 
   const filteredHospitals = hospitals.filter(hospital =>
     hospital.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

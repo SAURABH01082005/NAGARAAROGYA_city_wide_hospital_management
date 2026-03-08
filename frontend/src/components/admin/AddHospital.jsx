@@ -1,8 +1,9 @@
 // components/AddHospitalForm.js
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { Hospital, Mail, Lock, Link as LinkIcon, Building } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { AdminContext } from '../../contexts/AdminContext';
 
 export default function AddHospital() {
   const [formData, setFormData] = useState({
@@ -12,7 +13,7 @@ export default function AddHospital() {
     password: '',
     url: '',
   });
-
+const {aToken } = useContext(AdminContext)
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -24,7 +25,7 @@ export default function AddHospital() {
     e.preventDefault();
     setIsLoading(true);
 
-    const {data} = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/admin/add-hospital`, formData, {headers:{atoken:localStorage.getItem("atoken")}})
+    const {data} = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/admin/add-hospital`, formData, {headers:{atoken:aToken}})
     if(!data.success){
        return  toast.error(data.message || "Failed to add hospital");
     }

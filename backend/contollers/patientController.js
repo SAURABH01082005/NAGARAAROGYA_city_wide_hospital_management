@@ -95,7 +95,7 @@ const login = async (req, res) => {
         }
 
         const ptoken = jwt.sign({ patientId: data._id }, process.env.JWT_SECRET_PATIENT);
-        console.log("your patient id is ",data._id)
+        // console.log("your patient id is ",data._id)
         res.status(200).json({ success: true, ptoken, message: "Login successful for Patient" });
     } catch (error) {
         console.error('Error during login:', error);
@@ -109,7 +109,7 @@ const getPatientDetails = async (req, res) => {
     try {
         const patientId= req.patientId
         const data = await patientModel.findById(patientId)
-        console.log("patient id here is : ",patientId)
+        // console.log("patient id here is : ",patientId)
         if(!data){
             return res.json({ success: false, message: "Patient Not found in system" })
         }
@@ -121,6 +121,8 @@ const getPatientDetails = async (req, res) => {
         res.json({ success: false, message: error.message })
     }
 }
+
+
 
 
 

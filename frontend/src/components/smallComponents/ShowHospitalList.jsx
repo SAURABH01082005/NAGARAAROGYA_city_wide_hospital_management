@@ -1,44 +1,11 @@
-"use client";
-
 import { useContext, useState } from "react";
 import { PatientContext } from "../../contexts/PatientContext";
+import {Link} from 'react-router-dom'
+import axios  from 'axios'
 
-const hospitals = [
-  {
-    id: "HOSP-001",
-    name: "Apollo Hospitals Navi Mumbai",
-    address: "Parsik Hill Road, Sector 23, CBD Belapur, Navi Mumbai, Maharashtra 400614",
-  },
-  {
-    id: "HOSP-002",
-    name: "Kokilaben Dhirubhai Ambani Hospital",
-    address: "Rao Saheb Achutrao Patwardhan Marg, Four Bungalows, Andheri West, Mumbai, Maharashtra 400053",
-  },
-  {
-    id: "HOSP-003",
-    name: "Lilavati Hospital and Research Centre",
-    address: "A-791, Bandra Reclamation Rd, General Arunkumar Vaidya Nagar, Bandra West, Mumbai, Maharashtra 400050",
-  },
-  {
-    id: "HOSP-004",
-    name: "Fortis Hospital Mulund",
-    address: "Mulund - Goregaon Link Rd, Nahur West, Industrial Area, Bhandup West, Mumbai, Maharashtra 400078",
-  },
-  {
-    id: "HOSP-005",
-    name: "Jaslok Hospital and Research Centre",
-    address: "15, Dr. G. Deshmukh Marg, Pedder Road, Mumbai, Maharashtra 400026",
-  },
-  {
-    id: "HOSP-006",
-    name: "Nanavati Max Super Speciality Hospital",
-    address: "LIC Colony, Suresh Colony, Vile Parle West, Mumbai, Maharashtra 400056",
-  },
-  // Add more hospitals as needed
-];
 
 export default function ShowHospitalList() {
-    const {addressTimeDateAndDetailsArray,setAddressTimeDateAndDetailsArray} = useContext(PatientContext)
+  const { addressTimeDateAndDetailsArray, setAddressTimeDateAndDetailsArray ,pToken,speciality} = useContext(PatientContext)
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredHospitals = addressTimeDateAndDetailsArray.filter((hospital) =>
@@ -46,6 +13,12 @@ export default function ShowHospitalList() {
     hospital.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     hospital.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const gotoRespectiveHospital =async (hospitalId)=>{
+    console.log("in go to hospital : ",hospitalId)
+    
+  
+  }
 
   return (
     <div className="bg-[var(--color-primary)] text-white   px-5 md:px-8 w-[500px] h-[780px] overflow-y-scroll no-scrollbar">
@@ -115,17 +88,17 @@ export default function ShowHospitalList() {
                     <div className="flex-1 text-gray-300 text-base leading-relaxed line-clamp-4 md:line-clamp-5">
                       {hospital.address}
                     </div>
-                   
+
 
                     {/* Optional footer / action */}
                     <div className="flex pt-4 border-t border-gray-700/50 justify-between">
-                     <div className="flex-1 text-gray-300 text-base leading-relaxed line-clamp-4 md:line-clamp-5 ">
-                      {hospital.distanceKm} {" km  |  "}{hospital.durationMin}
-                    </div>
-                      <span className="text-sm text-gray-400 group-hover:text-[var(--color-secondary)] transition-colors">
+                      <div className="flex-1 text-gray-300 text-base leading-relaxed line-clamp-4 md:line-clamp-5 ">
+                        {hospital.distanceKm} {" km  |  "}{hospital.durationMin}
+                      </div>
+                      <Link target="_blank" rel="noopener noreferrer" to={`${hospital.appointmentPage}/${speciality}`} onClick = {()=>gotoRespectiveHospital(hospital)}   className="text-sm text-gray-400 group-hover:text-[var(--color-secondary)] transition-colors cursor-pointer">
                         View Details →
-                      </span>
-                      
+                      </Link>
+
                     </div>
                   </div>
                 </div>
