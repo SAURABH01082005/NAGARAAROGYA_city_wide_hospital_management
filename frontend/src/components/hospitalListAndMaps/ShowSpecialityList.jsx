@@ -1,92 +1,9 @@
-import { use, useContext, useEffect, useState } from "react";
-import { doctorSpecialities } from "../../generalData/doctorSpecialities";
+import React ,{useState,useContext} from 'react'
+import { PatientContext } from '../../contexts/PatientContext.jsx';
+import { doctorSpecialities } from "../../generalData/doctorSpecialities.js";
 import { doctorSpecialityAssets } from "../../assets/specialityofdoctor/assets.js"
-import { toast } from 'react-toastify'
+import { NavLink } from 'react-router-dom';
 
-
-
-//maps imports
-
-import { APIProvider, Map } from '@vis.gl/react-google-maps';
-import ShowHospitalMap from "../smallComponents/ShowHospitalMap.jsx";
-import axios from "axios";
-import { PatientContext } from "../../contexts/PatientContext.jsx";
-import ShowHospitalList from "../smallComponents/showHospitalList.jsx";
-
-
-export default function Appointment() {
-  const { speciality, setSpeciality ,addressAndDetailsArray,setAddressAndDetailsArray} = useContext(PatientContext)
-
-  useEffect(()=>{
-    setSpeciality("")
-    setAddressAndDetailsArray("")
-
-  },[])
-
-  
-  return (
-    <>
-      {
-        !speciality
-          ? <ShowSpecialityList  />
-          : <ShowMapAndHospitalList  />
-        // : <ShowHospitalList value={selectedSpeciality} />
-
-      }
-    </>
-  )
-}
-
-
-function ShowMapAndHospitalList(props) {
-
-  const { getHospitalsAddress, addressAndDetailsArray, setAddressAndDetailsArray ,speciality,setSpeciality} = useContext(PatientContext)
-
-
-  // console.log(addressAndDetailsArray, "************in appointment ")
-
-  return (
-    
-    <>{speciality && addressAndDetailsArray?.length 
-      ? <>
-      <ShowHospitalList/>
-
-      <ShowMap />
-      
-      </>
-      
-      : <> <div className="bg-gray-900/70 backdrop-blur-md border border-gray-800/80 rounded-2xl shadow-xl shadow-black/40 p-5 md:p-6 m-auto">
-          <div className="max-w-2xl mx-auto">
-             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
-              No Hospital Available for this OPD
-            </h2>
-            
-          </div>
-        </div>
-</>
-    }
-    </>
-  )
-}
-
-
-function ShowMap() {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  if (!apiKey) {
-    return <div style={{ padding: '2rem', color: 'red' }}>Missing API key in .env</div>;
-  }
-
-  return (
-    <div className="w-[800px] h-[750px] bg-gray-900/70 backdrop-blur-md border border-gray-800/80 rounded-2xl shadow-xl shadow-black/40 p-2 md:p-6">
-      <APIProvider apiKey={apiKey} region="IN" language="en">
-        <ShowHospitalMap  >
-
-        </ShowHospitalMap>
-      </APIProvider>
-    </div>
-  );
-
-}
 
 function ShowSpecialityList(props) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -141,9 +58,10 @@ function ShowSpecialityList(props) {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">
             {filteredSpecialities.map((specialty) => (
-              <div
+              <NavLink
                 key={specialty}
                 className="flex flex-col items-center group "//hover:scale-125 transition-all duration-300
+                to = {`../${specialty}/hospital-list`}
                 onClick={() => setSpeciality(specialty)}
               >
                 <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-[var(--color-secondary)]/30 group-hover:border-[var(--color-secondary)] transition-all duration-300 shadow-lg shadow-black/40 bg-gray-800 flex items-center justify-center ring-1 ring-gray-700/50 group-hover:ring-[var(--color-secondary)]/40 ">
@@ -158,7 +76,7 @@ function ShowSpecialityList(props) {
                 <h3 className="mt-4 text-base md:text-lg font-medium text-center leading-tight group-hover:text-[var(--color-secondary)] transition-colors duration-200">
                   {specialty}
                 </h3>
-              </div>
+              </NavLink>
             ))}
           </div>
         </div>
@@ -167,3 +85,5 @@ function ShowSpecialityList(props) {
     </div>
   );
 }
+
+export default ShowSpecialityList
