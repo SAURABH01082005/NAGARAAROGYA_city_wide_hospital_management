@@ -96,7 +96,7 @@ function Login(props) {
     return (
         <form className='w-full'>
             <div className='flex flex-col gap-4 w-full bg-[var(--color-card)] p-0 rounded-xl text-white text-sm items-center '>
-                <p className='text-2xl font-semibold text-center mb-4'><span className='text-[#5D84F9]'>{props.value?.value}</span> {type}</p>
+                <p className='text-2xl font-semibold text-center mb-4'><span className='text-[#5D84F9]'>{props.value}</span> {type}</p>
                 {type == 'Register' && (
                     <>
                         <p>Associated Hospital Credentials</p>

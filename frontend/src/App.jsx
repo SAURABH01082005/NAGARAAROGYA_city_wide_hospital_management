@@ -18,6 +18,8 @@ import Home from './components/Home'
 import Login from './components/Login'
 import Footer from './components/Footer.jsx';
 import { ToastContainer } from 'react-toastify'
+import IsLogin from './components/IsLogin.jsx'
+import NotFoundPage from './components/NotFoundPage.jsx'
 function App() {
   const [count, setCount] = useState(0)
 
@@ -27,10 +29,12 @@ function App() {
       <ToastContainer />
       
     <div className='flex items-start'>
-      {useLocation().pathname !== '/' && <Sidebar />}
+      
 
     <Routes>
       <Route path='/' element={<Home />} />
+      
+      <Route element={<IsLogin/>}>
       
       {/* admin dashboard */}
       <Route path='/admin-dashboard' element={<AdminDashboard />} />
@@ -44,10 +48,14 @@ function App() {
       <Route path='/appointment' element={<Appointment />} />
 
       {/* doctor routes */}
+      
       <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
       <Route path='/reports' element={<PatientReport />} />
       <Route path='/assign-resources' element={<AssignResources />} />
       <Route path='/add-patient' element={<AddPatient />} />
+
+      </Route>
+      <Route path="*" element={<NotFoundPage/>}/>
 
 
 

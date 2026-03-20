@@ -58,7 +58,7 @@ function ShowMapAndHospitalList(props) {
       : <> <div className="bg-gray-900/70 backdrop-blur-md border border-gray-800/80 rounded-2xl shadow-xl shadow-black/40 p-5 md:p-6 m-auto">
           <div className="max-w-2xl mx-auto">
              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
-              No Hospital Available for this IPD
+              No Hospital Available for this OPD
             </h2>
             
           </div>
@@ -143,10 +143,10 @@ function ShowSpecialityList(props) {
             {filteredSpecialities.map((specialty) => (
               <div
                 key={specialty}
-                className="flex flex-col items-center group"
+                className="flex flex-col items-center group "//hover:scale-125 transition-all duration-300
                 onClick={() => setSpeciality(specialty)}
               >
-                <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-[var(--color-secondary)]/30 group-hover:border-[var(--color-secondary)] transition-all duration-300 shadow-lg shadow-black/40 bg-gray-800 flex items-center justify-center ring-1 ring-gray-700/50 group-hover:ring-[var(--color-secondary)]/40">
+                <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-[var(--color-secondary)]/30 group-hover:border-[var(--color-secondary)] transition-all duration-300 shadow-lg shadow-black/40 bg-gray-800 flex items-center justify-center ring-1 ring-gray-700/50 group-hover:ring-[var(--color-secondary)]/40 ">
                   {/* {console.log(`${specialty.toLowerCase().replace(/\s+/g, "")}Icon`)} */}
                   <img
                     src={doctorSpecialityAssets[`${specialty.toLowerCase()}Icon`] || doctorSpecialityAssets['defaultIcon']}

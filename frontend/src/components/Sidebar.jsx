@@ -12,7 +12,7 @@ function Sidebar() {
     <div className='min-h-screen bg-[var(--color-card)] border-r border-[var(--color-primary-border)]'>
         {
             user === "Admin" && <ul className='text-white mt-5'>
-                <NavLink className={({isActive})=>`flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive? 'bg-[var(--color-secondary)] border-0 rounded-full border-r-4 border-primary': ''}`}  to={'/admin-dashboard'}>
+                <NavLink className={({isActive})=>` flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive? 'bg-[var(--color-secondary)] border-0 rounded-full border-r-4 border-primary': ''}`}  to={'/admin-dashboard'}>
                     <img src={assetsAdmin.home_icon} alt="" />
                     <p className='hidden md:block'>Dashboard</p>
                 </NavLink>
