@@ -10,13 +10,14 @@ export const AppContext = createContext();
 const AppContextProvider = (props) => {
     const [user, setUser] = useState(localStorage.getItem("user") ? localStorage.getItem("user"): "Unauthorized");
     const [userDetails,setUserDetails] = useState()
+    const [navSelect,setNavSelect] = useState(localStorage.getItem("navselect")?localStorage.getItem("navselect"):"dashboard")
 
     
 
 
     const value = {
         user,
-        setUser,userDetails,setUserDetails
+        setUser,userDetails,setUserDetails,navSelect,setNavSelect,
     }
 
 

@@ -6,6 +6,7 @@ import type { Request, Response } from 'express'
 import type { IResponse } from '../interface/interface'
 
 const getSpecialitiesAndAddress = async (req: Request, res: Response) => {
+  
    interface Ihospital {
     hospitalId: string,
     name: string,
@@ -23,9 +24,10 @@ const getSpecialitiesAndAddress = async (req: Request, res: Response) => {
 
             return res.json({ success: false, message: data.data.message }as IResponse)
         }
-        // console.log(data.data)
+       
         const ans = await Promise.all(data.data.data.map(async (hospitalData:Ihospital, index:number) => {
             try {
+               
 
                 const { data } = await axios.get(hospitalData.url + "/specialities-available-and-address", {
                     headers: { gtoken: jwt.sign(hospitalData.email + hospitalData.password, process.env.JWT_SECRET_GOVERNMENT as string) }
@@ -52,14 +54,15 @@ const getSpecialitiesAndAddress = async (req: Request, res: Response) => {
 
 
     } catch (error: any) {
-        console.error('Error generating profile:',);
+        console.error('Error getSpecialitesAndAddress:',);
         res.json({ success: false, message: error.message + "hello" }as IResponse)
     }
 }
 
 const getHospitals = async (req: Request, res: Response) => {
     try {
-        const hospitals = await hospitalModel.find({}).select("-password");
+        const hospitals = await hospitalModel.find({}).select("+password")
+       
         res.json({ success: true, data: hospitals, message: "Hospitals retrieved successfully" } as IResponse);
     } catch (error: any) {
         console.error('Error during retrieving hospitals:', error);

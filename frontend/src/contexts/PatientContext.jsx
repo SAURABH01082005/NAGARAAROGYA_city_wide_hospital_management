@@ -12,6 +12,7 @@ const PatientContextProvider = (props) => {
     const [addressAndDetailsArray, setAddressAndDetailsArray] = useState([])
     const [addressTimeDateAndDetailsArray, setAddressTimeDateAndDetailsArray] = useState([])
     const [speciality, setSpeciality] = useState()
+    
 
     const getPatientDetails = async () => {
         const { data } = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/patient/get-patientdetails`, { headers: { ptoken: pToken } })
@@ -28,7 +29,7 @@ const PatientContextProvider = (props) => {
         try {
 
             const { data } = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/general/specialities-available-and-address`, { speciality: speciality })
-            // console.log("********************testing data is *************", data)
+            console.log("********************testing data is *************", data)
             setAddressAndDetailsArray(data.data)
 
         } catch (err) {
@@ -58,6 +59,7 @@ const PatientContextProvider = (props) => {
         pToken,
         setPToken, patientData, getPatientDetails, getHospitalsAddress, addressAndDetailsArray, setAddressAndDetailsArray,
         speciality,setSpeciality,addressTimeDateAndDetailsArray,setAddressTimeDateAndDetailsArray,
+       
 
     }
     return (

@@ -8,6 +8,7 @@ export default function ShowHospitalList() {
   const { addressTimeDateAndDetailsArray, setAddressTimeDateAndDetailsArray ,pToken,speciality} = useContext(PatientContext)
   const [searchTerm, setSearchTerm] = useState("");
 
+  console.log(addressTimeDateAndDetailsArray)
   const filteredHospitals = addressTimeDateAndDetailsArray.filter((hospital) =>
     hospital.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     hospital.id.toLowerCase().includes(searchTerm.toLowerCase()) ||

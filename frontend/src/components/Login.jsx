@@ -40,7 +40,7 @@ function Login(props) {
                 const { data } = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/${props.value?.toLowerCase()}/login`, { email, password })
 
                 if (!data.success) {
-                    return toast.error(data.message || "Login failed");
+                    return toast.error(data.message+"from login function frontend" || "Login failed");
                 }
 
 
@@ -50,7 +50,7 @@ function Login(props) {
 
             } catch (error) {
                 console.error('Error during login:', error);
-                return toast.error(error.message || "An error occurred during login");
+                return toast.error(error.message+"from login function frontend" || "An error occurred during login");
             }
 
         } else {

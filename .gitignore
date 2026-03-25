@@ -6,6 +6,7 @@ backend/.env
 
 backendts/node_modules/
 backendts/dist
+backendts/.env
 
 
 

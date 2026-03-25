@@ -22,7 +22,7 @@ const register = async (req: Request, res: Response) => {
             return res.json({ success: false, message: "Password must be at least 8 characters" } as IResponse)
         }
 
-        const hospitalData = await hospitalModel.findOne({ hospitalId: hospitalId })
+        const hospitalData = await hospitalModel.findOne({ hospitalId: hospitalId }).select("+password")
         if (!hospitalData) {
             return res.json({ success: false, message: "Hospital not found" } as IResponse)
         }
@@ -77,7 +77,8 @@ const login = async (req: Request, res: Response) => {
             return res.json({ success: false, message: "Invalid email format" } as IResponse);
         }
 
-        const data = await doctorModel.findOne({ 'doctorDetail.email': email }).select("+password");
+        const data = await doctorModel.findOne({ 'doctorDetail.email': email }).select("+doctorDetail.password");
+        
        
         if (!data) {
             return res.json({ success: false, message: "Invalid credentials for Doctor" } as IResponse);
@@ -96,7 +97,7 @@ const login = async (req: Request, res: Response) => {
         res.status(200).json({ success: true, data: dtoken, message: "Login successful for Doctor" } as IResponse);
     } catch (error: any) {
         console.error('Error during login:', error);
-        res.json({ success: false, message: error.message } as IResponse);
+        res.json({ success: false, message: error.message+"from login backend" } as IResponse);
     }
 }
 
@@ -104,7 +105,7 @@ const login = async (req: Request, res: Response) => {
 const getDoctorDetail = async (req: Request, res: Response) => {
     try {
         const doctorId = req.params.doctorId
-        const data = await doctorModel.findById(doctorId).select("-doctorDetail.password")
+        const data = await doctorModel.findById(doctorId)
         // console.log("doctor id here is : ",doctorId)
         if (!data) {
             return res.json({ success: false, message: "Doctor Not found in system" } as IResponse)
