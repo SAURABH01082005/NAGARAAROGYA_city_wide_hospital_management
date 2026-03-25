@@ -113,7 +113,7 @@ const login = async (req, res) => {
 
         const ptoken = jwt.sign({ patientId: data._id }, process.env.JWT_SECRET_PATIENT);
         // console.log("your patient id is ",data._id)
-        res.status(200).json({ success: true, ptoken, message: "Login successful for Patient" });
+        res.status(200).json({ success: true, data:ptoken, message: "Login successful for Patient" });
     } catch (error) {
         console.error('Error during login:', error);
         res.json({ success: false, message: error.message });

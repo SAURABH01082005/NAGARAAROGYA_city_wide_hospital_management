@@ -73,6 +73,8 @@ const patientSchema = new Schema<Ipatient>({
         },
         password: {
             type: String,
+            required:true,
+            select:false
         },
 
         name: {

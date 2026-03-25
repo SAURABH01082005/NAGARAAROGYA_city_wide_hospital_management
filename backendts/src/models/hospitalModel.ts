@@ -22,7 +22,7 @@ const hospitalSchema = new Schema<Ihospital>({
         type: String, required: true,
     },
     password: {
-        type: String, required: true,
+        type: String, required: true,select:false
     },
     url: {
         type: String, required: true,

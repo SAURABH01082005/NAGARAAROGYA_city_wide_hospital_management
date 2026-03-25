@@ -11,9 +11,9 @@ const DoctorContextProvider = (props)=>{
 
     const getDoctorDetails = async ()=>{
         const {data} = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/get-doctordetails`,{headers:{dtoken:dToken}})
-        //  console.log("data is :" ,data)
-        //  console.log("dtoken ",dToken)
-         setDoctorData(data.data)
+         console.log("data.data.doctorDetail is :" ,data.data.doctorDetail)
+         console.log("dtoken ",dToken)
+         setDoctorData({doctorDetail:data.data.doctorDetail})
     }
     
     useEffect(()=>{

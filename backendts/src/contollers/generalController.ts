@@ -59,7 +59,7 @@ const getSpecialitiesAndAddress = async (req: Request, res: Response) => {
 
 const getHospitals = async (req: Request, res: Response) => {
     try {
-        const hospitals = await hospitalModel.find({});
+        const hospitals = await hospitalModel.find({}).select("-password");
         res.json({ success: true, data: hospitals, message: "Hospitals retrieved successfully" } as IResponse);
     } catch (error: any) {
         console.error('Error during retrieving hospitals:', error);

@@ -26,7 +26,7 @@ export default function Navbar() {
     switch (user) {
       case "Patient": temp = { name: patientData.patientDetail?.name, image: patientData.patientDetail?.image }
         break
-      case "Doctor": temp = { name: doctorData.doctorDetail?.name, image: doctorData.doctorDetail?.image }
+      case "Doctor": temp = { name: doctorData?.doctorDetail?.name, image: doctorData?.doctorDetail?.image }
         break
       case "Admin": temp = { name: adminData.name, image: assets.adminData }
         break

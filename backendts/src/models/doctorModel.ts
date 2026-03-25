@@ -20,7 +20,7 @@ const doctorSchema = new Schema<Idoctor>({
             type:String,unique:true,
         },
         password:{
-            type:String,required:true,
+            type:String,required:true,select:false
         },
         name:{
             type:String,required:true,  

@@ -36,7 +36,9 @@ function Login(props) {
 
             try {
                 console.log(email, password)
+                console.log(`${import.meta.env.VITE_APP_BACKEND_URL}/api/${props.value?.toLowerCase()}/login`)
                 const { data } = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/${props.value?.toLowerCase()}/login`, { email, password })
+
                 if (!data.success) {
                     return toast.error(data.message || "Login failed");
                 }
@@ -69,19 +71,19 @@ function Login(props) {
        
         switch (props.value) {
             case "Patient":
-                setPToken(myData.ptoken)
-                localStorage.setItem("pToken",myData.ptoken)
-                console.log("patient token stored in localStorage:", myData.ptoken);
+                setPToken(myData.data)
+                localStorage.setItem("pToken",myData.data)
+                console.log("patient token stored in localStorage:", myData.data);
                 break;
             case "Doctor":
-                setDToken(myData.dtoken)
-                localStorage.setItem("dToken",myData.dtoken)
-                console.log("doctor token stored in localStorage:", myData.dtoken);
+                setDToken(myData.data)
+                localStorage.setItem("dToken",myData.data)
+                console.log("doctor token stored in localStorage:", myData.data);
                 break;
             case "Admin":
-                setAToken(myData.atoken)
-                localStorage.setItem("aToken",myData.atoken)
-                console.log("admin token stored in localStorage:", myData.atoken);
+                setAToken(myData.data)
+                localStorage.setItem("aToken",myData.data)
+                console.log("admin token stored in localStorage:", myData.data);
                 break;
         }
         setUser(props.value)

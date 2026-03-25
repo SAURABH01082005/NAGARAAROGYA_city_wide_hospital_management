@@ -17,7 +17,7 @@ const PatientContextProvider = (props) => {
         const { data } = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/patient/get-patientdetails`, { headers: { ptoken: pToken } })
         // console.log("data is :", data)
         // console.log("ptoken ", pToken)
-         await setPatientData(data.data)
+         setPatientData(data.data)
         // console.log("data.data is ",data.data)
         // console.log("patient data is ",patientData)
 

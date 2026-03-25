@@ -1,4 +1,4 @@
-import jwt, { type JwtPayload } from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
 import type { Request,Response,NextFunction } from 'express'
 import type{ IResponse } from '../interface/interface'
 
@@ -16,7 +16,7 @@ const authPatient = (req:Request, res:Response, next:NextFunction) => {
         req.params.patientId = patientId //id of database
         next();
     }catch(err:any){
-        console.log(err)
+        console.log("error in authpatient: ",err)
         res.json({success:false,message:err.message} as IResponse)
     }
     }

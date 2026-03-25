@@ -8,7 +8,7 @@ import type { Request, Response, NextFunction } from 'express'
 import { type IResponse } from '../interface/interface';
 
 const register = async (req: Request, res: Response) => {
-    console.log("helo")
+ 
     interface IPatientCredentials {
         success: boolean,
         message?: string,
@@ -43,7 +43,7 @@ const register = async (req: Request, res: Response) => {
         }
 
         //check hospital exsits
-        const hospitalData = await hospitalModel.findOne({ hospitalId: hospitalId })
+        const hospitalData = await hospitalModel.findOne({ hospitalId: hospitalId }).select("+password")
         if (!hospitalData) {
             return res.json({ success: false, message: "Hospital not found" } as IResponse)
         }
@@ -79,12 +79,18 @@ const register = async (req: Request, res: Response) => {
         }]
 
         //checkinng if user already present:
-        console.log("checking alreadypatient")
-        const alreadyPatient = await patientModel.findOne({ "patientDetail.email": email, "patientDetail.password": hashedPassword })
+        
+        const alreadyPatient = await patientModel.findOne({ "patientDetail.email": email}).select("+password")
+        
         if (alreadyPatient) {
+            const isMatch = bcrypt.compare(password,alreadyPatient.patientDetail.password)
             const setCredentials = await patientModel.findByIdAndUpdate(alreadyPatient._id, { patientDetail })
-            if(setCredentials)
-            return res.json({ success: false, message: "Updated Profile Successfully" } as IResponse)
+            //setting ptoken
+            if(setCredentials){
+                  
+                const ptoken = jwt.sign({ patientId: setCredentials._id }, process.env.JWT_SECRET_PATIENT as string)
+                return res.json({ success: true,data:ptoken, message: "Updated Profile Successfully" } as IResponse)
+            }
         }
 
 
@@ -97,7 +103,7 @@ const register = async (req: Request, res: Response) => {
 
 
     } catch (error: any) {
-        console.error('Error during registration:', error);
+        console.error('Error during registration:');
         res.json({ success: false, message: error.message+"from patient controller" }as IResponse)
     }
 }
@@ -111,7 +117,7 @@ const login = async (req: Request, res: Response) => {
         if (!validator.isEmail(email)) {
             return res.json({ success: false, message: "Invalid email format" }as IResponse);
         }
-        const data = await patientModel.findOne({ 'patientDetail.email': email });
+        const data = await patientModel.findOne({ 'patientDetail.email': email }).select("+password");
         if (!data) {
             return res.json({ success: false, message: "Invalid credentials for Patient" } as IResponse);
         }
@@ -128,7 +134,7 @@ const login = async (req: Request, res: Response) => {
 
         const ptoken = jwt.sign({ patientId: data._id }, process.env.JWT_SECRET_PATIENT as string);
         // console.log("your patient id is ",data._id)
-        res.status(200).json({ success: true, ptoken, message: "Login successful for Patient" });
+        res.status(200).json({ success: true, data:ptoken, message: "Login successful for Patient" });
     } catch (error: any) {
         console.error('Error during login:', error);
         res.json({ success: false, message: error.message } as IResponse);
@@ -140,7 +146,7 @@ const login = async (req: Request, res: Response) => {
 const getPatientDetails = async (req: Request, res: Response) => {
     try {
         const patientId = req.params.patientId
-        const data = await patientModel.findById(patientId)
+        const data = await patientModel.findById(patientId).select("-patientDetail.password")
         // console.log("patient id here is : ",patientId)
         if (!data) {
             return res.json({ success: false, message: "Patient Not found in system" } as IResponse)
