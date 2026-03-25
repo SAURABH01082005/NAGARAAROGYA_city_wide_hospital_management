@@ -8,16 +8,18 @@ const PatientContext = createContext();
 
 const PatientContextProvider = (props) => {
     const [pToken, setPToken] = useState(localStorage.getItem('pToken') ? localStorage.getItem('pToken') : "");
-    const [patientData, setPatientData] = useState()
+    const [patientData, setPatientData] = useState({})
     const [addressAndDetailsArray, setAddressAndDetailsArray] = useState([])
     const [addressTimeDateAndDetailsArray, setAddressTimeDateAndDetailsArray] = useState([])
     const [speciality, setSpeciality] = useState()
 
     const getPatientDetails = async () => {
         const { data } = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/patient/get-patientdetails`, { headers: { ptoken: pToken } })
-        console.log("data is :", data)
-        console.log("ptoken ", pToken)
-        setPatientData(data.data)
+        // console.log("data is :", data)
+        // console.log("ptoken ", pToken)
+         await setPatientData(data.data)
+        // console.log("data.data is ",data.data)
+        // console.log("patient data is ",patientData)
 
 
     }

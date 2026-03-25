@@ -29,7 +29,7 @@ const Home = () => {
             <h2 className="mb-2.5 text-[#cecccc]">Patient</h2>
             <p className="text-sm text-[#666] mb-5">Book appointments, view prescriptions, and track health records.</p>
             { user === "Patient" ? (
-              <NavLink to="/patient-dashboard" className="bg-[#5D84F9] text-white border-0 px-6 py-2.5 rounded cursor-pointer transition inline-block no-underline hover:bg-[#4a73e0]">
+              <NavLink to="/patient/dashboard" className="bg-[#5D84F9] text-white border-0 px-6 py-2.5 rounded cursor-pointer transition inline-block no-underline hover:bg-[#4a73e0]">
                 Go to Dashboard
               </NavLink>
             ) : (
@@ -46,7 +46,7 @@ const Home = () => {
             <h2 className="mb-2.5 text-[#cecccc]">Doctor</h2>
             <p className="text-sm text-[#666] mb-5">Manage patients, view schedules, and update medical records.</p>
             { user === "Doctor" ? (
-              <NavLink to="/doctor-dashboard" className="bg-[#5D84F9] text-white border-0 px-6 py-2.5 rounded cursor-pointer transition inline-block no-underline hover:bg-[#4a73e0]">
+              <NavLink to="/doctor/dashboard" className="bg-[#5D84F9] text-white border-0 px-6 py-2.5 rounded cursor-pointer transition inline-block no-underline hover:bg-[#4a73e0]">
                 Go to Dashboard
               </NavLink>
             ) : (
@@ -63,7 +63,7 @@ const Home = () => {
             <h2 className="mb-2.5 text-[#cecccc]">Admin</h2>
             <p className="text-sm text-[#666] mb-5">Control hospital data, manage users, and oversee operations.</p>
             { user === "Admin" ? (
-              <NavLink to="/admin-dashboard" className="bg-[#5D84F9] text-white border-0 px-6 py-2.5 rounded cursor-pointer transition inline-block no-underline hover:bg-[#4a73e0]">
+              <NavLink to="/admin/dashboard" className="bg-[#5D84F9] text-white border-0 px-6 py-2.5 rounded cursor-pointer transition inline-block no-underline hover:bg-[#4a73e0]">
                 Go to Dashboard
               </NavLink>
             ) : (

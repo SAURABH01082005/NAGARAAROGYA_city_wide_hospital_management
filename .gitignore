@@ -4,5 +4,9 @@ frontend/.env
 backend/node_modules/
 backend/.env
 
+backendts/node_modules/
+backendts/dist
+
+
 
 googlemapkey:AIzaSyDjykoIGiP_MY-75hkWIlkV_sD3rABCmNs

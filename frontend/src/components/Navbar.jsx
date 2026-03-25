@@ -24,9 +24,9 @@ export default function Navbar() {
   const getData = async () => {
     let temp = { name: "name", image: assets.profilePic };
     switch (user) {
-      case "Patient": temp = { name: patientData.patientDetails.name, image: patientData.patientDetails.image }
+      case "Patient": temp = { name: patientData.patientDetail?.name, image: patientData.patientDetail?.image }
         break
-      case "Doctor": temp = { name: doctorData.doctorDetails.name, image: doctorData.doctorDetails.image }
+      case "Doctor": temp = { name: doctorData.doctorDetail?.name, image: doctorData.doctorDetail?.image }
         break
       case "Admin": temp = { name: adminData.name, image: assets.adminData }
         break

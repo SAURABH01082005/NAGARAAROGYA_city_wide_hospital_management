@@ -18,6 +18,7 @@ const register = async (req, res) => {
             return res.json({ success: false, message: "Password must be at least 8 characters" })
         }
 
+        //check hospital exsits
         const hospitalData = await hospitalModel.findOne({ hospitalId: hospitalId })
         if (!hospitalData) {
             return res.json({ success: false, message: "Hospital not found" })
@@ -30,30 +31,46 @@ const register = async (req, res) => {
         
 
         if (!data.success) {
-            return res.json({ success: false, message: "Failed to fetch user details from hospital" })
+            return res.json({ success: false, message: data.message })
         }
 
-
-
+        //password hashing
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(password, salt)
-        const patientDetails = {
-            name: data.patientData.patientDetails.name,
+
+        
+        const patientDetail = {
             email: email,
-            image:data.patientData.patientDetails.image,
             password: hashedPassword,
-            uniqueGovId: data.patientData.patientDetails.uniqueGovId,
-            dob: new Date(data.patientData.patientDetails.dob),
-            address: data.patientData.patientDetails.address
+            name: data.data.patientDetail.name,
+            image:data.data.patientDetail.image,
+            dob: new Date(data.data.patientDetail.dob),
+            address: data.data.patientDetail.address
 
         }
-        const appointments = {
+        const appointment = [{
+            detail:data.data.detail,
+            reference:[],
+            isCompleted:false,
+
+        }]
+
+        //checkinng if user already present:
+        const alreadyPatient = await patientModel.find({"patientDetail.email":email,"patientDetail.password":hashedPassword})
+        if(alreadyPatient.length > 0){
+            const setCredentials  =await patientModel.findOneAndUpdate({"patientDetail.email":email},{patientDetail})
+           return res.json({ success: false, message: "Updated Profile Successfully" })
+
+        }
+
+          const appointments = {
             uniqueGovAppointmentId: data.patientData.reference[0].patientId + data.patientData.reference[0].hospitalId,
             reference: data.patientData.reference
 
         }
 
         // return console.log("patientData is ",data.patientData)
+
 
         const setCredentials = await patientModel.create({ patientDetails, appointments })
 

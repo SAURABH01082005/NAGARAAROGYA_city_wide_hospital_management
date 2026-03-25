@@ -87,7 +87,7 @@ function Login(props) {
         setUser(props.value)
         localStorage.setItem("user", props.value);
         
-        navigate( `/${props.value?.toLowerCase()}-dashboard`)
+        navigate( `/${props.value?.toLowerCase()}/dashboard`)
 
 
     }

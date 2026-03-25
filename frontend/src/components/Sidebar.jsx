@@ -13,16 +13,16 @@ function Sidebar() {
             {/******************************admin******************************  */}
             {
                 user === "Admin" && <ul className='text-white mt-5'>
-                    <NavLink className={({ isActive }) => ` flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full border-r-4 border-primary' : ''}`} to={'/admin-dashboard'}>
+                    <NavLink className={({ isActive }) => ` flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full border-r-4 border-primary' : ''}`} to={'/admin/dashboard'}>
                         <img src={assetsAdmin.home_icon} alt="" />
                         <p className='hidden md:block'>Dashboard</p>
                     </NavLink>
 
-                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full border-r-4 border-primary' : ''}`} to={'/add-hospital'}>
+                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full border-r-4 border-primary' : ''}`} to={'/admin/add-hospital'}>
                         <img src={assetsAdmin.add_icon} alt="" />
                         <p className='hidden md:block'>Add Hopital</p>
                     </NavLink>
-                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full border-r-4 border-primary' : ''}`} to={'/hospital-list'}>
+                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full border-r-4 border-primary' : ''}`} to={'/admin/hospital-list'}>
                         <img src={assetsAdmin.people_icon} alt="" />
                         <p className='hidden md:block'>Hospial List</p>
                     </NavLink>
@@ -33,43 +33,43 @@ function Sidebar() {
 
             {
                 user === "Doctor" && <ul className='text-white mt-5'>
-                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full border-r-4 border-primary' : ''}`} to={'/doctor-dashboard'}>
+                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full border-r-4 border-primary' : ''}`} to={'/doctor/dashboard'}>
                         <img src={assetsAdmin.home_icon} alt="" />
                         <p className='hidden md:block'>Dashboard</p>
                     </NavLink>
-                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/add-patient'}>
+                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/doctor/appointments'}>
                         <img src={assetsAdmin.appointment_icon} alt="" />
-                        <p className='hidden md:block'>Add Paitent</p>
+                        <p className='hidden md:block'>Appointments</p>
                     </NavLink>
 
-                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/assign-resources'}>
+                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'doctor/assign-resources'}>
                         <img src={assetsAdmin.people_icon} alt="" />
                         <p className='hidden md:block'>Assign Resources</p>
                     </NavLink>
-                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/reports'}>
+                    {/* <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'doctor/dashboard'}>
                         <img src={assetsAdmin.people_icon} alt="" />
                         <p className='hidden md:block'>Patient Reports</p>
-                    </NavLink>
+                    </NavLink> */}
                 </ul>
             }
 
             {/******************************Patient******************************  */}
             {
                 user === "Patient" && <ul className='text-white mt-5 '>
-                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)]  border-0 rounded-full border-r-4 border-primary ' : ''} `} to={'/patient-dashboard'}>
+                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)]  border-0 rounded-full border-r-4 border-primary ' : ''} `} to={'/patient/dashboard'}>
                         <img src={assetsAdmin.home_icon} alt="" />
                         <p className='hidden md:block'>Dashboard</p>
                     </NavLink>
-                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/appointment/list'}>
+                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/patient/appointment/list'}>
                         <img src={assetsAdmin.appointment_icon} alt="" />
                         <p className='hidden md:block'>Appointment (OPD)</p>
                     </NavLink>
 
-                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/patient-reports'}>
+                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/patient/reports'}>
                         <img src={assetsAdmin.people_icon} alt="" />
                         <p className='hidden md:block'>Patient Reports</p>
                     </NavLink>
-                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/patient-profile'}>
+                    <NavLink className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/patient/profile'}>
                         <img src={assetsAdmin.people_icon} alt="" />
                         <p className='hidden md:block'>Profile</p>
                     </NavLink>

@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import validator from "validator";
 import axios from "axios";
+import patientModel from "../models/patientModel.js";
 
 const register = async (req, res) => {
     try {
@@ -109,5 +110,17 @@ const getDoctorDetails = async (req, res) => {
     }
 }
 
+const getAppointments = async (req,res)=>{
+    try{
+        const data = await patientModel.find({})
+    res.json({success:true,data:data})
+    }catch(error){
+        res.json({success:false,message:error.message})
+    }
 
-export {login , register,getDoctorDetails}
+}
+
+
+
+
+export {login , register,getDoctorDetails,getAppointments}

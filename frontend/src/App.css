@@ -4,6 +4,9 @@
   --color-bg: var(--color-primary);
   --color-text: #ffffff;
   --color-card: #2a2a2a;
+  --color-container-dark:#161A24;
+  --color-container-item-board:#1C2635;
+  --color-container-item-board-border:#364153;
   --color-primary-border:#3A3A3A;
 }
 
