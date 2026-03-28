@@ -6,9 +6,11 @@ import axios from 'axios';
 import validator from 'validator';
 import type { Request, Response, NextFunction } from 'express'
 import { type IResponse } from '../interface/interface';
+import pendingPatientModel from '../models/pendingPatientModel';
+import { sendWelcomeEmail, sendVerificationEamil } from '../contollers/email/emailController'
 
 const register = async (req: Request, res: Response) => {
- 
+
     interface IPatientCredentials {
         success: boolean,
         message?: string,
@@ -79,48 +81,97 @@ const register = async (req: Request, res: Response) => {
         }]
 
         //checkinng if user already present:
-        
-        const alreadyPatient = await patientModel.findOne({ "patientDetail.email": email}).select("+password")
-        
+
+        const alreadyPatient = await patientModel.findOne({ "patientDetail.email": email }).select("+patientDetail.password")
+        console.log("is alreadypatient",password, alreadyPatient?.patientDetail.password)
+
         if (alreadyPatient) {
-            const isMatch = bcrypt.compare(password,alreadyPatient.patientDetail.password)
+            const isMatch = bcrypt.compare(password, alreadyPatient.patientDetail.password)
+            if(!isMatch){
+                return res.json({success:false,message:"Wrong Credentials"})
+            }
             const setCredentials = await patientModel.findByIdAndUpdate(alreadyPatient._id, { patientDetail })
             //setting ptoken
-            if(setCredentials){
+            if (setCredentials) {
 
                 const ptoken = jwt.sign({ patientId: setCredentials._id }, process.env.JWT_SECRET_PATIENT as string)
-                return res.json({ success: true,data:ptoken, message: "Updated Profile Successfully" } as IResponse)
+                return res.json({ success: true, data: ptoken, message: "Updated Profile Successfully",isAlreadyPatient:true } as IResponse)
             }
         }
 
 
         //new patient registration
-        const setCredentials = await patientModel.create({ patientDetail, appointment })
-        
-        //setting ptoken
-        const ptoken = jwt.sign({ patientId: setCredentials._id }, process.env.JWT_SECRET_PATIENT as string)
-        res.json({ success: true, message: "Patient email and password registered successfully",data: ptoken }as IResponse)
+        const verficationToken = Math.floor(Math.random() * 1000000)
+        const setCredentials = await pendingPatientModel.create({ patientDetail, appointment, verficationToken })
+
+        // //setting ptoken
+        // const ptoken = jwt.sign({ patientId: setCredentials._id }, process.env.JWT_SECRET_PATIENT as string)
+        sendVerificationEamil(email, String(verficationToken))
+        res.json({ success: true, message: "email has been sent successfully", data: setCredentials._id } as IResponse)
 
 
     } catch (error: any) {
         console.error('Error during registration:');
-        res.json({ success: false, message: error.message+"from patient controller" }as IResponse)
+        res.json({ success: false, message: error.message + "from patient controller" } as IResponse)
     }
+}
+
+const verifyEmail = async (req: Request, res: Response) => {
+    try {
+        const { code, itemId } = req.body
+        const user = await pendingPatientModel.findById(itemId).select("+patientDetail.password")
+        if (!user || user.verficationToken !== Number(code)) {
+            return res.json({ success: false, message: "Inavlid or Expired Code" } as IResponse)
+
+        }
+
+
+        const data = { patientDetail: user.patientDetail, appointment: user.appointment }
+        const setCredentials = await patientModel.create(data)
+
+        await user.deleteOne()
+        //setting ptoken
+        const ptoken = jwt.sign({ patientId: setCredentials._id }, process.env.JWT_SECRET_PATIENT as string)
+        res.json({ success: true, message: "Patient email and password registered successfully", data: ptoken } as IResponse)
+
+        // await senWelcomeEmail(user.patientDetail.email, user.patientDetail.name)
+        // return res.status(200).json({ success: true, message: "Email Verifed Successfully" })
+
+    } catch (error) {
+        console.log(error)
+        return res.json({ success: false, message: "internal server error" })
+    }
+}
+
+const resendOTP = async (req: Request, res: Response) => {
+    const { itemId } = req.body
+    const data = await pendingPatientModel.findById(itemId)
+    if (!data)
+        return res.json({ success: false, message: "Expired or Invalid OTP" })
+    const verficationToken = Math.floor(Math.random() * 1000000)
+    data.verficationToken = verficationToken
+    await data.save()
+
+    sendVerificationEamil(data.patientDetail.email, String(verficationToken))
+
+    return res.json({ success: true, message: "New OTP sent" })
 }
 
 const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) {
-            return res.json({ success: false, message: "Email and password are required for login" }as IResponse);
+            return res.json({ success: false, message: "Email and password are required for login" } as IResponse);
         }
         if (!validator.isEmail(email)) {
-            return res.json({ success: false, message: "Invalid email format" }as IResponse);
+            return res.json({ success: false, message: "Invalid email format" } as IResponse);
         }
         const data = await patientModel.findOne({ 'patientDetail.email': email }).select("+patientDetail.password");
         if (!data) {
             return res.json({ success: false, message: "Invalid credentials for Patient" } as IResponse);
         }
+
+        sendWelcomeEmail(email, data.patientDetail.name)
 
 
         //decrypting hassed password form database
@@ -134,7 +185,7 @@ const login = async (req: Request, res: Response) => {
 
         const ptoken = jwt.sign({ patientId: data._id }, process.env.JWT_SECRET_PATIENT as string);
         // console.log("your patient id is ",data._id)
-        res.status(200).json({ success: true, data:ptoken, message: "Login successful for Patient" });
+        res.status(200).json({ success: true, data: ptoken, message: "Login successful for Patient" });
     } catch (error: any) {
         console.error('Error during login:', error);
         res.json({ success: false, message: error.message } as IResponse);
@@ -151,7 +202,7 @@ const getPatientDetails = async (req: Request, res: Response) => {
         if (!data) {
             return res.json({ success: false, message: "Patient Not found in system" } as IResponse)
         }
-        res.json({ success: true, data:data } as IResponse)
+        res.json({ success: true, data: data } as IResponse)
 
 
     } catch (error: any) {
@@ -173,4 +224,4 @@ const getReport = async (req: Request, res: Response) => {
     }
 }
 
-export { getReport, getPatientDetails, login, register }
+export { getReport, getPatientDetails, login, register, verifyEmail,resendOTP }

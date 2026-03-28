@@ -4,6 +4,21 @@ import jwt from 'jsonwebtoken'
 
 import type { Request, Response } from 'express'
 import type { IResponse } from '../interface/interface'
+import patientModel from '../models/patientModel'
+import Reference from '../models/referenceModel'
+
+
+interface Iappointment {
+    detail: {
+        hospitalId: string,
+        appointmentId: string,
+        userId: string,
+        docId: string,
+    },
+    reference: Array<Object>,
+    isCompleted: false,
+    date: Date
+}
 
 const getSpecialitiesAndAddress = async (req: Request, res: Response) => {
   
@@ -70,6 +85,14 @@ const getHospitals = async (req: Request, res: Response) => {
     }
 }
 
+const registerPatientNewAppointmentByAnotherHospital = async (req:Request,res:Response)=>{
+    const {detail}= req.body
+    const appointment:Iappointment = {detail,isCompleted:false,date:new Date(),reference:[]}
+    console.log("appointment is this ",appointment)
+    // const insertedAppoint = await patientModel.updateOne({},{$push:{"appointment":appointment}})
+
+}
 
 
-export { getSpecialitiesAndAddress, getHospitals }
+
+export { getSpecialitiesAndAddress, getHospitals,registerPatientNewAppointmentByAnotherHospital }

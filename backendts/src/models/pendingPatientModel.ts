@@ -28,7 +28,9 @@ interface Ipatient {
 
     },
 
-    appointment:Iappointment[]
+    appointment:Iappointment[],
+    verficationToken:number,
+    expiresAt:Date
 
 }
 
@@ -105,12 +107,21 @@ const patientSchema = new Schema<Ipatient>({
     appointment: {
         type: [appointmentSchema],
         required: true,
+    },
+    verficationToken:{
+        type:Number,required:true
+    },
+    expiresAt:{
+        type:Date,
+        default:()=>Date.now() + 60*60*1 
     }
+    
 
 }, { minimize: false })
 
+patientSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
 
-const patientModel: Model<Ipatient> = models.patientModel || model<Ipatient>("patientsregisteredtogovernment", patientSchema)
+const pendingPatientModel: Model<Ipatient> = models.pendingPatientModel || model<Ipatient>("pendingPatientsregisteredtogovernment", patientSchema)
 
-export default patientModel;
+export default pendingPatientModel;
 

@@ -1,5 +1,5 @@
 // components/HospitalList.js
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { Building, Mail, Globe, Eye, Edit, Trash2, Search } from 'lucide-react';
 import axios from 'axios';
 import { AdminContext } from '../../contexts/AdminContext';
@@ -9,6 +9,7 @@ export default function HospitalList() {
   const {aToken } = useContext(AdminContext)
   const [searchTerm, setSearchTerm] = useState('');
   const [hospitals, setHospitals] = useState([]);
+  
 
 
 
@@ -19,9 +20,9 @@ export default function HospitalList() {
         return toast.error(data.message || "Failed to fetch hospitals");
       }
       console.log("Hospitals fetched successfully:", data.data);
-      const filter = await filterActive(data.data)
-      console.log("filer is ", filter)
-      return filter;
+      await filterActive(data.data)
+  
+     
 
     } catch (error) {
       toast.error("Error fetching hospitals: " + error.message);
@@ -30,19 +31,30 @@ export default function HospitalList() {
   }
 
   const filterActive = async (hospitals) => {
-    const result = await Promise.all( hospitals.map(async element => {
+    console.log("hospital is ",hospitals)
+    await Promise.all( hospitals.map(async element => {
+      console.log("element in map is",element)
+      let k;
       try{
         const { data } = await axios.get(`${element.url}/`)
         
-        return { ...element, status: 'Active' }
+        k={ ...element, status: 'Active' }
+        
       
       }catch(err){
-        return { ...element, status: "Inactive" }
+        k= { ...element, status: "Inactive" }
         
       }
-    }))
-    return result
+     
 
+      return setHospitals((preItem)=>{
+         // prevent duplicates (important for Strict Mode)
+      if (preItem.some((item) => item._id === element._id)) {
+        return preItem;
+      }
+       return [...preItem,k]})
+      
+    }))
 
   }
   const deleteHsopitalHandler = async (hospitalId)=>{
@@ -58,22 +70,16 @@ export default function HospitalList() {
 
 
     }catch(err){
-         toast.error("Error in deleting hospital " + error.message);
-      console.error('Error in deletign hospital', error);
+         toast.error("Error in deleting hospital " + err.message);
+      console.error('Error in deletign hospital', err);
         
       }
   }
 
 
   useEffect(() => {
-    const loadData = async ()=>{
-      console.log("loadData is calling...")
 
-      setHospitals( await getHospitals())
-      console.log("laodData is called.........")
-    }
-    loadData();
-
+      getHospitals()
   }, [])
   console.log("before filter is ",hospitals)
 

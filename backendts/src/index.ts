@@ -1,13 +1,16 @@
 import dotenv from 'dotenv';
+dotenv.config();
+
+
 import express from 'express';
 import connectDB from './config/mongodb';
 import patientRoute from './routes/patientRoute'
 import doctorRoute from './routes/doctorRoute';
 import adminRoute from './routes/adminRoute';
 import generalRoute from './routes/generalRoute';
+import {verifyConnection} from './config/email.config'
 import cors from 'cors';
 
-dotenv.config();
 
 const app = express();
 
@@ -15,6 +18,7 @@ const port = process.env.PORT || 5000;
 
 //config
 connectDB();
+verifyConnection();
 
 //middlewares
 

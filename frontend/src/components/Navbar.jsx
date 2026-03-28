@@ -11,7 +11,7 @@ import { DoctorContext } from '../contexts/DoctorContext'
 export default function Navbar() {
   const navigate = useNavigate();
 
-  const { user, setUser, userDetails, setUserDetails } = useContext(AppContext)
+  const { user, setUser, userDetails, setUserDetails,setNavSelect } = useContext(AppContext)
   const { pToken, setPToken, getPatientDetails, patientData } = useContext(PatientContext)
   const { aToken, setAToken, getAdminDetails, adminData } = useContext(AdminContext)
   const { dToken, setDToken, doctorData, getDoctorDetails } = useContext(DoctorContext)
@@ -28,7 +28,7 @@ export default function Navbar() {
         break
       case "Doctor": temp = { name: doctorData?.doctorDetail?.name, image: doctorData?.doctorDetail?.image }
         break
-      case "Admin": temp = { name: adminData.name, image: assets.adminData }
+      case "Admin": temp = { name: adminData?.name, image: assets.adminData }
         break
 
     }
@@ -50,6 +50,8 @@ export default function Navbar() {
     }
 
     localStorage.removeItem("user")
+    localStorage.removeItem("navselect")
+    setNavSelect("dashboard")
     setUser("Unauthorized")
     toast.success("Logout Successfully")
     navigate("/")

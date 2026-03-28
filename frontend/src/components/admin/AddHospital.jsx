@@ -25,7 +25,8 @@ const {aToken } = useContext(AdminContext)
     e.preventDefault();
     setIsLoading(true);
 
-    const {data} = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/admin/add-hospital`, formData, {headers:{atoken:aToken}})
+    try{
+      const {data} = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/admin/add-hospital`, formData, {headers:{atoken:aToken}})
     if(!data.success){
        return  toast.error(data.message || "Failed to add hospital");
     }
@@ -36,8 +37,15 @@ const {aToken } = useContext(AdminContext)
     formData.email = '';
     formData.password = '';
     formData.url = '';
-    // console.log('Submitting hospital:', formData);
-    setIsLoading(false);
+
+    }catch(error){
+      toast.error("Axios error")
+      console.log("Axios error in addhospital.jsx: ",error)
+
+    }finally{
+      setIsLoading(false);
+    }
+   
   };
 
   return (
@@ -45,7 +53,7 @@ const {aToken } = useContext(AdminContext)
       className="mx-auto bg-[#1E1E1E] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden"
       style={{ 
         width: '1000px', 
-        height: '600px',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column'
       }}
