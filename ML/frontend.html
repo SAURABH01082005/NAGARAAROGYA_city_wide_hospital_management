@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Smart Hospital ML - Terminal View</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --term-bg: #010409;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header h1 { margin: 0; font-size: 18px; }
+  header .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 12px 20px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: inherit;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 16px;
+    padding: 16px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+  }
+  .panel h2 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .panel p.desc {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--term-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  button.action {
+    width: 100%;
+    padding: 9px;
+    background: var(--accent);
+    color: #0d1117;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  button.action:hover { filter: brightness(1.1); }
+  button.action.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  button.action.danger { background: var(--red); color: #fff; }
+  button.action:disabled { opacity: 0.5; cursor: not-allowed; }
+  .button-row { display: flex; gap: 8px; }
+  .button-row button { margin-bottom: 0; }
+  .terminal {
+    background: var(--term-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text);
+    white-space: pre-wrap;
+    min-height: 480px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    background: #21262d;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .terminal-header + .terminal { border-radius: 0 0 6px 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    border: 1px solid var(--border);
+    margin-right: 6px;
+  }
+  .badge.green { color: var(--green); border-color: var(--green); }
+  .badge.red { color: var(--red); border-color: var(--red); }
+  .badge.yellow { color: var(--yellow); border-color: var(--yellow); }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .stat {
+    background: var(--term-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+  }
+  .stat .label { font-size: 11px; color: var(--muted); }
+  .stat .value { font-size: 18px; font-weight: 600; margin-top: 2px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .hidden { display: none !important; }
+  .empty-state { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🏥 Smart Hospital ML — Web Terminal</h1>
+    <div class="sub">Frontend wrapper around bed_allocation2.py, department2.py, opd_token_phase2.py, predict_and_append2.py, train_crit_dept2.py</div>
+  </div>
+  <div id="serverStatus" class="badge yellow">connecting…</div>
+</header>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="bed">Bed Allocation</button>
+  <button class="tab" data-tab="predict">Predict &amp; Append</button>
+  <button class="tab" data-tab="department">Department Mapping</button>
+  <button class="tab" data-tab="opd">OPD Token (Phase 2)</button>
+  <button class="tab" data-tab="train">Train Model</button>
+</div>
+
+<!-- =================== BED ALLOCATION =================== -->
+<div class="layout tab-panel" id="panel-bed">
+  <div class="panel">
+    <h2>Bed Allocation</h2>
+    <p class="desc">Mirrors <code>bed_allocation2.py</code>. Predicts criticality, assigns department, scores patient, and allocates ICU or Ward.</p>
+
+    <label>Age</label>
+    <input type="number" id="bed-age" value="60" min="0" max="120" />
+
+    <label>Gender</label>
+    <select id="bed-gender">
+      <option>Male</option><option>Female</option><option>Other</option>
+    </select>
+
+    <label>Condition</label>
+    <input type="text" id="bed-condition" value="Heart Attack" />
+
+    <label>Procedure</label>
+    <input type="text" id="bed-procedure" value="Angioplasty" />
+
+    <label>Waiting time (minutes)</label>
+    <input type="number" id="bed-wait" value="15" min="0" />
+
+    <div class="button-row">
+      <button class="action" onclick="bedAllocate()">Allocate Bed</button>
+      <button class="action secondary" onclick="bedReset()">Reset Beds</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="label">ICU available</div><div class="value" id="bed-icu">–</div></div>
+      <div class="stat"><div class="label">Ward available</div><div class="value" id="bed-ward">–</div></div>
+    </div>
+  </div>
+  <div>
+    <div class="terminal-header">
+      <span><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span> bed_allocation2.py</span>
+      <span id="bed-status"></span>
+    </div>
+    <div class="terminal" id="bed-output"><span class="empty-state">Run an allocation to see output…</span></div>
+  </div>
+</div>
+
+<!-- =================== PREDICT & APPEND =================== -->
+<div class="layout tab-panel hidden" id="panel-predict">
+  <div class="panel">
+    <h2>Predict &amp; Append</h2>
+    <p class="desc">Mirrors <code>predict_and_append2.py</code>. Predicts Criticality, assigns Department, and appends the row to the CSV.</p>
+
+    <label>Age</label>
+    <input type="number" id="pred-age" value="45" min="0" max="120" />
+
+    <label>Gender</label>
+    <select id="pred-gender">
+      <option>Male</option><option>Female</option><option>Other</option>
+    </select>
+
+    <label>Condition</label>
+    <input type="text" id="pred-condition" value="Asthma" />
+
+    <label>Procedure</label>
+    <input type="text" id="pred-procedure" value="Nebulization" />
+
+    <button class="action" onclick="predictRun()">Predict &amp; Append</button>
+  </div>
+  <div>
+    <div class="terminal-header">
+      <span><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span> predict_and_append2.py</span>
+    </div>
+    <div class="terminal" id="pred-output"><span class="empty-state">Submit a patient to see prediction output…</span></div>
+  </div>
+</div>
+
+<!-- =================== DEPARTMENT =================== -->
+<div class="layout tab-panel hidden" id="panel-department">
+  <div class="panel">
+    <h2>Department Mapping</h2>
+    <p class="desc">Mirrors <code>department2.py</code>. Reads <code>hospital_data_analysis_arrival_only.csv</code>, assigns a Department to every row using rule-based mapping, and saves <code>hospital_data_analysis_with_department.csv</code>.</p>
+    <button class="action" onclick="departmentRun()">Run department2.py</button>
+  </div>
+  <div>
+    <div class="terminal-header">
+      <span><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span> department2.py</span>
+    </div>
+    <div class="terminal" id="dept-output"><span class="empty-state">Click Run to map departments…</span></div>
+  </div>
+</div>
+
+<!-- =================== OPD =================== -->
+<div class="layout tab-panel hidden" id="panel-opd">
+  <div class="panel">
+    <h2>OPD Token (Phase 2)</h2>
+    <p class="desc">Mirrors <code>opd_token_phase2.py</code>. Self-service tokens with QR activation and surge-aware wait-time estimation.</p>
+
+    <button class="action" onclick="opdGenerate()">1. Generate OPD Token</button>
+
+    <label>QR Token ID</label>
+    <input type="text" id="opd-tid" placeholder="e.g. a1b2c3d4" />
+    <button class="action" onclick="opdActivate()">2. Scan QR / Activate Token</button>
+
+    <button class="action" onclick="opdServe()">3. Serve Next Patient</button>
+
+    <hr/>
+    <div class="button-row">
+      <button class="action secondary" onclick="opdRefresh()">Refresh Status</button>
+      <button class="action danger" onclick="opdReset()">Reset OPD</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="label">Queue length</div><div class="value" id="opd-queue">–</div></div>
+      <div class="stat"><div class="label">Wait time (min)</div><div class="value" id="opd-wait">–</div></div>
+      <div class="stat"><div class="label">Surge level</div><div class="value" id="opd-surge">–</div></div>
+      <div class="stat"><div class="label">OPD open</div><div class="value" id="opd-open">–</div></div>
+    </div>
+  </div>
+  <div>
+    <div class="terminal-header">
+      <span><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span> opd_token_phase2.py</span>
+    </div>
+    <div class="terminal" id="opd-output"><span class="empty-state">Loading OPD status…</span></div>
+  </div>
+</div>
+
+<!-- =================== TRAIN =================== -->
+<div class="layout tab-panel hidden" id="panel-train">
+  <div class="panel">
+    <h2>Train Criticality Model</h2>
+    <p class="desc">Mirrors <code>train_crit_dept2.py</code>. Re-trains the logistic-regression criticality model on <code>hospital_data_analysis_with_department.csv</code> and saves <code>criticality_arrival_model.pkl</code>.</p>
+    <button class="action" onclick="trainRun()">Run train_crit_dept2.py</button>
+    <p class="desc" style="margin-top:14px">Note: training may take 5–20 seconds depending on dataset size.</p>
+  </div>
+  <div>
+    <div class="terminal-header">
+      <span><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span> train_crit_dept2.py</span>
+    </div>
+    <div class="terminal" id="train-output"><span class="empty-state">Click Run to train…</span></div>
+  </div>
+</div>
+
+<script>
+const API = "";  // same origin
+
+// ---------- tab switching ----------
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+    document.getElementById("panel-" + btn.dataset.tab).classList.remove("hidden");
+    if (btn.dataset.tab === "opd") opdRefresh();
+    if (btn.dataset.tab === "bed") bedRefreshState();
+  });
+});
+
+// ---------- helpers ----------
+function setOutput(id, text) {
+  const el = document.getElementById(id);
+  el.textContent = text || "(no output)";
+}
+function setBusy(id) {
+  document.getElementById(id).textContent = "Running…";
+}
+async function apiPost(path, body) {
+  const r = await fetch(API + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+async function apiGet(path) {
+  const r = await fetch(API + path);
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+
+// ---------- BED ----------
+async function bedAllocate() {
+  setBusy("bed-output");
+  try {
+    const res = await apiPost("/api/bed/allocate", {
+      age: +document.getElementById("bed-age").value,
+      gender: document.getElementById("bed-gender").value,
+      condition: document.getElementById("bed-condition").value,
+      procedure: document.getElementById("bed-procedure").value,
+      waiting_time: +document.getElementById("bed-wait").value,
+    });
+    setOutput("bed-output", res.output);
+    document.getElementById("bed-icu").textContent = res.icu;
+    document.getElementById("bed-ward").textContent = res.ward;
+  } catch (e) {
+    setOutput("bed-output", "ERROR: " + e.message);
+  }
+}
+async function bedReset() {
+  await apiPost("/api/bed/reset", { icu: 2, ward: 3 });
+  setOutput("bed-output", "Beds reset:\nICU  : 2\nWard : 3");
+  bedRefreshState();
+}
+async function bedRefreshState() {
+  try {
+    const s = await apiGet("/api/bed/state");
+    document.getElementById("bed-icu").textContent = s.icu;
+    document.getElementById("bed-ward").textContent = s.ward;
+  } catch (e) {}
+}
+
+// ---------- PREDICT ----------
+async function predictRun() {
+  setBusy("pred-output");
+  try {
+    const res = await apiPost("/api/predict/run", {
+      age: +document.getElementById("pred-age").value,
+      gender: document.getElementById("pred-gender").value,
+      condition: document.getElementById("pred-condition").value,
+      procedure: document.getElementById("pred-procedure").value,
+    });
+    setOutput("pred-output", res.output);
+  } catch (e) {
+    setOutput("pred-output", "ERROR: " + e.message);
+  }
+}
+
+// ---------- DEPARTMENT ----------
+async function departmentRun() {
+  setBusy("dept-output");
+  try {
+    const res = await apiPost("/api/department/run", {});
+    setOutput("dept-output", res.output);
+  } catch (e) {
+    setOutput("dept-output", "ERROR: " + e.message);
+  }
+}
+
+// ---------- OPD ----------
+function applyOpdStats(res) {
+  document.getElementById("opd-queue").textContent = res.queue_length;
+  document.getElementById("opd-wait").textContent = res.wait_minutes;
+  document.getElementById("opd-surge").textContent = res.surge_level;
+  document.getElementById("opd-open").textContent = res.opd_open ? "Yes" : "No";
+}
+async function opdRefresh() {
+  try {
+    const res = await apiGet("/api/opd/status");
+    setOutput("opd-output", res.output);
+    applyOpdStats(res);
+  } catch (e) {
+    setOutput("opd-output", "ERROR: " + e.message);
+  }
+}
+async function opdGenerate() {
+  try {
+    const res = await apiPost("/api/opd/generate-token", {});
+    setOutput("opd-output", res.output);
+    applyOpdStats(res);
+    if (res.token) document.getElementById("opd-tid").value = res.token.id;
+  } catch (e) {
+    setOutput("opd-output", "ERROR: " + e.message);
+  }
+}
+async function opdActivate() {
+  try {
+    const res = await apiPost("/api/opd/activate-token", {
+      token_id: document.getElementById("opd-tid").value,
+    });
+    setOutput("opd-output", res.output);
+    applyOpdStats(res);
+  } catch (e) {
+    setOutput("opd-output", "ERROR: " + e.message);
+  }
+}
+async function opdServe() {
+  try {
+    const res = await apiPost("/api/opd/serve-next", {});
+    setOutput("opd-output", res.output);
+    applyOpdStats(res);
+  } catch (e) {
+    setOutput("opd-output", "ERROR: " + e.message);
+  }
+}
+async function opdReset() {
+  await apiPost("/api/opd/reset", {});
+  opdRefresh();
+}
+
+// ---------- TRAIN ----------
+async function trainRun() {
+  setBusy("train-output");
+  try {
+    const res = await apiPost("/api/train/run", {});
+    setOutput("train-output", res.output);
+  } catch (e) {
+    setOutput("train-output", "ERROR: " + e.message);
+  }
+}
+
+// ---------- server status ----------
+(async () => {
+  try {
+    await apiGet("/api/bed/state");
+    const s = document.getElementById("serverStatus");
+    s.textContent = "● connected";
+    s.classList.remove("yellow");
+    s.classList.add("green");
+    bedRefreshState();
+  } catch {
+    const s = document.getElementById("serverStatus");
+    s.textContent = "● offline";
+    s.classList.remove("yellow");
+    s.classList.add("red");
+  }
+})();
+</script>
+</body>
+</html>
