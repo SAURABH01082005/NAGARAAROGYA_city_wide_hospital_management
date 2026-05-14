@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models,Model ,Types} from "mongoose";
+import mongoose, { Schema, model, models, Model, Types } from "mongoose";
 
 
 interface Iappointment {
@@ -10,12 +10,10 @@ interface Iappointment {
     },
     reference: Types.ObjectId[],
     isCompleted: boolean,
-    date: {
-        type:Date,
-    }
+    date: Date
 }
 interface Ipatient {
-    
+
     patientDetail: {//which should be equal to appointment
         email: string,
         password: string,
@@ -28,7 +26,7 @@ interface Ipatient {
 
     },
 
-    appointment:Iappointment[]
+    appointment: Iappointment[]
 
 }
 
@@ -38,7 +36,7 @@ interface Ipatient {
 
 
 const appointmentSchema = new Schema<Iappointment>({
-    
+
     detail: {
         type: {
             hospitalId: { type: String, required: true },
@@ -49,11 +47,11 @@ const appointmentSchema = new Schema<Iappointment>({
         required: true
 
     },
-    reference:{
-        type:[
+    reference: {
+        type: [
             {
-                type:[Object],
-                ref:"Reference"
+                type: [Object],
+                ref: "Reference"
 
             }
         ]
@@ -75,8 +73,8 @@ const patientSchema = new Schema<Ipatient>({
         },
         password: {
             type: String,
-            required:true,
-            select:false
+            required: true,
+            select: false
         },
 
         name: {

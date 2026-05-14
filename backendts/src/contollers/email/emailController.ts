@@ -1,34 +1,49 @@
 import { transporter } from '../../config/email.config'
-import {Verification_Email_Template,Welcome_Email_Template} from '../../contollers/email/EmailTemplate'
+import { Verification_Email_Template, Welcome_Email_Template, Confirmation_Email_Template } from '../../contollers/email/EmailTemplate'
 import nodemailer from 'nodemailer'
 
-export const sendVerificationEamil=async(email:string,verificationCode:string)=>{
+export const sendVerificationEamil = async (email: string, verificationCode: string) => {
     try {
-     const response=   await transporter.sendMail({
+        const response = await transporter.sendMail({
             from: '"nagarAarogya" <sybooks1000@gmail.com>',
 
             to: email, // list of receivers
             subject: "Verify your Email", // Subject line
             text: "Verify your Email", // plain text body
-            html: Verification_Email_Template.replace("{verificationCode}",verificationCode)
+            html: Verification_Email_Template.replace("{verificationCode}", verificationCode)
         })
         // console.log('Email send Successfully',response)
     } catch (error) {
-        console.log('Email error',error)
+        console.log('Email error', error)
     }
 }
-export const sendWelcomeEmail=async(email:string,name:string)=>{
+export const sendWelcomeEmail = async (email: string, name: string) => {
     try {
-     const response=   await transporter.sendMail({
+        const response = await transporter.sendMail({
             from: '"nagarAarogya" <sybooks1000@gmail.com>',
 
             to: email, // list of receivers
             subject: "Welcome Email", // Subject line
             text: "Welcome Email", // plain text body
-            html: Welcome_Email_Template.replace("{name}",name)
+            html: Welcome_Email_Template.replace("{name}", name)
         })
         // console.log('Email send Successfully',response)
     } catch (error) {
-        console.log('Email error',error)
+        console.log('Email error', error)
+    }
+}
+export const sendInfoConfirmationEmail = async (email: string, message: string) => {
+    try {
+        const response = await transporter.sendMail({
+            from: '"nagarAarogya" <sybooks1000@gmail.com>',
+
+            to: email, // list of receivers
+            subject: "Confirmation Email", // Subject line
+            text: "Confirmation Email", // plain text body
+            html: Confirmation_Email_Template.replace("{message}", message)
+        })
+        // console.log('Email send Successfully',response)
+    } catch (error) {
+        console.log('Email error', error)
     }
 }

@@ -5,31 +5,46 @@ import jwt from 'jsonwebtoken'
 import type { Request, Response } from 'express'
 import type { IResponse } from '../interface/interface'
 import patientModel from '../models/patientModel'
-import Reference from '../models/referenceModel'
+import ipdAppointmentModel from '../models/ipdAppointmentModel'
+import referenceModel from '../models/referenceModel'
+import { Types } from 'mongoose'
+import { sendInfoConfirmationEmail } from '../contollers/email/emailController'
+import generatePassword from 'generate-password';
 
 
 interface Iappointment {
+    _id: Types.ObjectId,
     detail: {
         hospitalId: string,
         appointmentId: string,
         userId: string,
         docId: string,
     },
-    reference: Array<Object>,
+    reference: Types.ObjectId[],
     isCompleted: false,
     date: Date
 }
 
-const getSpecialitiesAndAddress = async (req: Request, res: Response) => {
-  
-   interface Ihospital {
-    hospitalId: string,
-    name: string,
-    email: string,
-    password: string,
-    url: string
-
+interface IreferenceModel {
+    hospitalId: string;
+    docId: string;
+    referToHospitalId: string;
+    report: Types.ObjectId[];
+    reason: string;
+    date: Date;
 }
+
+
+const getSpecialitiesAndAddress = async (req: Request, res: Response) => {
+
+    interface Ihospital {
+        hospitalId: string,
+        name: string,
+        email: string,
+        password: string,
+        url: string
+
+    }
     try {
         // let ans=[]
         const { speciality } = req.body
@@ -37,12 +52,12 @@ const getSpecialitiesAndAddress = async (req: Request, res: Response) => {
 
         if (!data.data.success) {
 
-            return res.json({ success: false, message: data.data.message }as IResponse)
+            return res.json({ success: false, message: data.data.message } as IResponse)
         }
-       
-        const ans = await Promise.all(data.data.data.map(async (hospitalData:Ihospital, index:number) => {
+
+        const ans = await Promise.all(data.data.data.map(async (hospitalData: Ihospital, index: number) => {
             try {
-               
+
 
                 const { data } = await axios.get(hospitalData.url + "/specialities-available-and-address", {
                     headers: { gtoken: jwt.sign(hospitalData.email + hospitalData.password, process.env.JWT_SECRET_GOVERNMENT as string) }
@@ -52,7 +67,7 @@ const getSpecialitiesAndAddress = async (req: Request, res: Response) => {
                     return res.json({ success: false, message: data.message } as IResponse)
                 }
                 // console.log(data.data," ->  ",speciality)
-                if (data.data.specialities.some((s:string) => s.toLowerCase() == speciality.toLowerCase()))
+                if (data.data.specialities.some((s: string) => s.toLowerCase() == speciality.toLowerCase()))
                     return { name: hospitalData.name, id: hospitalData.hospitalId, address: data.data.hospitalAddress, appointmentPage: data.data.appointmentPage }
             } catch (err) {
                 // console.log(hospitalData.url + "/specialities-available-and-address" , " is  inactive")
@@ -70,14 +85,14 @@ const getSpecialitiesAndAddress = async (req: Request, res: Response) => {
 
     } catch (error: any) {
         console.error('Error getSpecialitesAndAddress:',);
-        res.json({ success: false, message: error.message + "hello" }as IResponse)
+        res.json({ success: false, message: error.message + "hello" } as IResponse)
     }
 }
 
 const getHospitals = async (req: Request, res: Response) => {
     try {
         const hospitals = await hospitalModel.find({}).select("+password")
-       
+
         res.json({ success: true, data: hospitals, message: "Hospitals retrieved successfully" } as IResponse);
     } catch (error: any) {
         console.error('Error during retrieving hospitals:', error);
@@ -85,14 +100,67 @@ const getHospitals = async (req: Request, res: Response) => {
     }
 }
 
-const registerPatientNewAppointmentByAnotherHospital = async (req:Request,res:Response)=>{
-    const {detail}= req.body
-    const appointment:Iappointment = {detail,isCompleted:false,date:new Date(),reference:[]}
-    console.log("appointment is this ",appointment)
-    // const insertedAppoint = await patientModel.updateOne({},{$push:{"appointment":appointment}})
+const registerPatientNewAppointmentByAnotherHospital = async (req: Request, res: Response) => {
+    const { detail, patientDetail, docName, hospitalName } = req.body
+    const patientDetailWithPassword = {
+        ...patientDetail, password: generatePassword.generate({
+            length: 8,
+            numbers: true,
+            symbols: true,
+            uppercase: true,
+            lowercase: true
+        })
+    }
+    const reference: IreferenceModel = {
+        hospitalId: detail.hospitalId,
+        docId: detail.docId,
+        referToHospitalId: detail.hospitalId,
+        report: [],
+        reason: "IPD ADDMISSON",
+        date: new Date()
+    }
+    const appointment: Iappointment = { _id: new Types.ObjectId(), detail, isCompleted: false, date: new Date(), reference: [] }
 
+    console.log("appointment is this ", appointment, "\npatientDetail is this : ", patientDetail, "\ndocName is : ", docName)
+    try {
+        let data = await patientModel.findOne({ "patientDetail.email": patientDetail.email })
+        const refdata = await referenceModel.create(reference)
+        console.log("data is found : ", data)
+        if (!refdata) {
+            return res.json({ success: false, message: "Reference not created" } as IResponse)
+        }
+        appointment.reference.push(refdata._id as Types.ObjectId)
+        if (!data) {
+            data = await patientModel.create({ patientDetail: patientDetailWithPassword, appointment: [appointment] })
+            if (!data) {
+                return res.json({ success: false, message: "Appointment not created" } as IResponse)
+            }
+            await sendInfoConfirmationEmail(patientDetail.email, `Hello Mr./Ms. ${patientDetail.name} you are now registered to IPD in nagarAarogya system. Login to nagarAarogya by password : ${patientDetailWithPassword.password}.Your addmission is done by doctor ${docName} in hospital ${hospitalName}`)
+
+        } else {
+            const insertedAppoint = await patientModel.updateOne({ "patientDetail.email": patientDetail.email }, { $push: { "appointment": appointment } })
+            if (insertedAppoint.modifiedCount == 0) {
+                return res.json({ success: false, message: "Appointment not created" } as IResponse)
+            }
+            await sendInfoConfirmationEmail(patientDetail.email, `Hello Mr./Ms. ${patientDetail.name} you are now registered to IPD in nagarAarogya system.Your addmission is done by doctor ${docName} in hospital ${hospitalName}`)
+
+        }
+        console.log("data is updated or created : ")
+
+
+        const ipdQueue = await ipdAppointmentModel.create({ appointmentRef: appointment._id, hospitalRef: detail.hospitalId, patientRef: data._id as Types.ObjectId, isCompleted: false })
+        if (!ipdQueue) {
+            return res.json({ success: false, message: "Appointment not created" } as IResponse)
+        }
+    }
+    catch (error: any) {
+        console.error('Error during registering patient new appointment by another hospital:', error.message);
+        return res.json({ success: false, message: error.message } as IResponse);
+    }
+
+    return res.json({ success: true, message: "Appointment created successfully" } as IResponse)
 }
 
 
 
-export { getSpecialitiesAndAddress, getHospitals,registerPatientNewAppointmentByAnotherHospital }
+export { getSpecialitiesAndAddress, getHospitals, registerPatientNewAppointmentByAnotherHospital }

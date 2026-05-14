@@ -114,10 +114,11 @@ function Login(props) {
         try {
             console.log(email, password)
             console.log(`${import.meta.env.VITE_APP_BACKEND_URL}/api/${props.value?.toLowerCase()}/login`)
+           
             const { data } = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/${props.value?.toLowerCase()}/login`, { email, password })
-
+            console.log("*********************testing*********************", data)
             if (!data.success) {
-                return toast.error(data.message + "from login function frontend" || "Login failed");
+                return toast.error(data.message + "archit from login function frontend" || "Login failed");
             }
 
 

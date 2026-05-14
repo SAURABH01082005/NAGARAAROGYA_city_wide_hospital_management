@@ -113,7 +113,7 @@ const patientSchema = new Schema<Ipatient>({
     },
     expiresAt:{
         type:Date,
-        default:()=>Date.now() + 60*60*1 
+        default:()=>Date.now() + 1000*60*60*1 
     }
     
 

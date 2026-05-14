@@ -21,6 +21,7 @@ import IsLogin from './components/IsLogin.jsx'
 import NotFoundPage from './components/NotFoundPage.jsx'
 import ShowSpecialityList from './components/hospitalListAndMaps/ShowSpecialityList.jsx'
 import ShowMapAndHospitalList from './components/hospitalListAndMaps/ShowMapAndHospitalList.jsx'
+import DirectedLogin from './components/DirectedLogin.jsx'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -35,6 +36,7 @@ function App() {
 
         <Routes>
           <Route path='/' element={<Home />} />
+          <Route path='/register-patient-new-appointment-by-another-hospital/:itemId' element={<DirectedLogin value={"Patient"} />} />
 
           <Route element={<IsLogin />}>
 

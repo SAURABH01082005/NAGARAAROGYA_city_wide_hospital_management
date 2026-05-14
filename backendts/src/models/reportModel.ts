@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models,Model } from "mongoose";
+import mongoose, { Schema, model, models, Model } from "mongoose";
 
 interface Ireport {
     doctorId: string,
@@ -39,6 +39,6 @@ const reportSchema = new Schema<Ireport>({
     },
 }, { minimize: false })
 
-const reportModel: Model<Ireport>= models.reportModel || model<Ireport>("Report",reportSchema)
+const reportModel: Model<Ireport> = models.reportModel || model<Ireport>("report", reportSchema)
 
 export default reportModel

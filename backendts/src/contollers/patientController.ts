@@ -83,30 +83,37 @@ const register = async (req: Request, res: Response) => {
         //checkinng if user already present:
 
         const alreadyPatient = await patientModel.findOne({ "patientDetail.email": email }).select("+patientDetail.password")
-        console.log("is alreadypatient",password, alreadyPatient?.patientDetail.password)
+        console.log("is alreadypatient", password, alreadyPatient?.patientDetail.password)
 
         if (alreadyPatient) {
             const isMatch = bcrypt.compare(password, alreadyPatient.patientDetail.password)
-            if(!isMatch){
-                return res.json({success:false,message:"Wrong Credentials"})
+            if (!isMatch) {
+                return res.json({ success: false, message: "Wrong Credentials" })
             }
             const setCredentials = await patientModel.findByIdAndUpdate(alreadyPatient._id, { patientDetail })
             //setting ptoken
             if (setCredentials) {
 
                 const ptoken = jwt.sign({ patientId: setCredentials._id }, process.env.JWT_SECRET_PATIENT as string)
-                return res.json({ success: true, data: ptoken, message: "Updated Profile Successfully",isAlreadyPatient:true } as IResponse)
+                return res.json({ success: true, data: ptoken, message: "Updated Profile Successfully", isAlreadyPatient: true } as IResponse)
+            }
+            else {
+                return res.json(({ success: false, message: "unable to update in mongo" }))
             }
         }
 
-
+        console.log("register function is called")
         //new patient registration
         const verficationToken = Math.floor(Math.random() * 1000000)
         const setCredentials = await pendingPatientModel.create({ patientDetail, appointment, verficationToken })
 
         // //setting ptoken
         // const ptoken = jwt.sign({ patientId: setCredentials._id }, process.env.JWT_SECRET_PATIENT as string)
+        if (!setCredentials) {
+            return res.json({ success: false, message: "unable to to push intermediate data in mongo" } as IResponse)
+        }
         sendVerificationEamil(email, String(verficationToken))
+        console.log("otp is sent by register")
         res.json({ success: true, message: "email has been sent successfully", data: setCredentials._id } as IResponse)
 
 
@@ -118,15 +125,17 @@ const register = async (req: Request, res: Response) => {
 
 const verifyEmail = async (req: Request, res: Response) => {
     try {
-        const { code, itemId } = req.body
+        const { otp, itemId } = req.body
         const user = await pendingPatientModel.findById(itemId).select("+patientDetail.password")
-        if (!user || user.verficationToken !== Number(code)) {
+        console.log("verify email function", otp, itemId)
+        if (!user || user.verficationToken !== Number(otp)) {
+            console.log("user", user)
             return res.json({ success: false, message: "Inavlid or Expired Code" } as IResponse)
 
         }
 
 
-        const data = { patientDetail: user.patientDetail, appointment: user.appointment }
+        const data: any = { patientDetail: user.patientDetail, appointment: user.appointment }
         const setCredentials = await patientModel.create(data)
 
         await user.deleteOne()
@@ -158,8 +167,10 @@ const resendOTP = async (req: Request, res: Response) => {
 }
 
 const login = async (req: Request, res: Response) => {
+    console.log("login function is called")
     try {
         const { email, password } = req.body;
+        console.log(email, password)
         if (!email || !password) {
             return res.json({ success: false, message: "Email and password are required for login" } as IResponse);
         }
@@ -188,7 +199,7 @@ const login = async (req: Request, res: Response) => {
         res.status(200).json({ success: true, data: ptoken, message: "Login successful for Patient" });
     } catch (error: any) {
         console.error('Error during login:', error);
-        res.json({ success: false, message: error.message } as IResponse);
+        res.json({ success: false, message: error.message + "archit" } as IResponse);
     }
 }
 
@@ -217,11 +228,27 @@ const getPatientDetails = async (req: Request, res: Response) => {
 
 const getReport = async (req: Request, res: Response) => {
     try {
-
+        // Placeholder for future implementation
+        res.json({ success: false, message: "Not implemented yet" } as IResponse);
     } catch (error: any) {
         console.error('Error generating report:', error);
         res.json({ success: false, message: error.message } as IResponse)
     }
 }
 
-export { getReport, getPatientDetails, login, register, verifyEmail,resendOTP }
+
+const addAppointment = async (req: Request, res: Response) => {
+    const { itemId, hospitalId } = req.body
+    const hospitalData = await hospitalModel.find({ hospitalId }).select("+password")
+    if (!hospitalData) {
+
+    }
+    // const url = hospitalData.url
+
+    // const patientDataHos = await axios.post(`${url}/`)
+
+    // const data  = await patientModel.findByIdAndUpdate(req.params.patientId,{$push:{appointment:}})
+
+
+}
+export { getReport, getPatientDetails, login, register, verifyEmail, resendOTP, addAppointment }

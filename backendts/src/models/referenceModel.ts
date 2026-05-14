@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models, Types,Model } from "mongoose";
+import mongoose, { Schema, model, models, Types, Model } from "mongoose";
 
 interface IReference {
   hospitalId: string;
@@ -26,7 +26,7 @@ const referenceSchema = new Schema<IReference>(
     report: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Report",
+        ref: "report",
       },
     ],
     reason: {
@@ -35,13 +35,13 @@ const referenceSchema = new Schema<IReference>(
     },
     date: {
       type: Date,
-      default:Date.now,
+      default: Date.now,
     },
   },
   { timestamps: true }
 );
 
-const Reference:Model<IReference> =
-  models.Reference || model<IReference>("Reference", referenceSchema);
+const referenceModel: Model<IReference> =
+  models.referenceModel || model<IReference>("referenceModel", referenceSchema);
 
-export default Reference;
+export default referenceModel;

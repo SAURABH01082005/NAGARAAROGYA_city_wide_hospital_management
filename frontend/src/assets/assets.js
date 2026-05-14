@@ -15,8 +15,10 @@ import stripeLogo from './stripe_logo.png'
 import uploadArea from './upload_area.png'
 import uploadIcon from './upload_icon.png'
 import verifiedIcon from './verified_icon.svg'
+import cityHospitalImg from './city_hospital_img.png'
 
 export const assets = {
+    cityHospitalImg,
     nagarAarogya,
     aboutImage,
     appointmentImg,

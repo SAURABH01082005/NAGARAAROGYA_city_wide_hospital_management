@@ -10,6 +10,7 @@ import adminRoute from './routes/adminRoute';
 import generalRoute from './routes/generalRoute';
 import {verifyConnection} from './config/email.config'
 import cors from 'cors';
+import generalOutRoute from './routes/generalOutRoute';
 
 
 const app = express();
@@ -31,6 +32,7 @@ app.use("/api/patient", patientRoute)
 app.use("/api/doctor", doctorRoute)
 app.use("/api/admin", adminRoute)
 app.use("/api/general", generalRoute)
+app.use("/api/generalout",generalOutRoute)
 
 //localhost:5000/
 
