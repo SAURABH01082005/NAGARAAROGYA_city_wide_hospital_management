@@ -6,8 +6,25 @@ import validator from "validator";
 import axios from "axios";
 import patientModel from "../models/patientModel";
 import { type IResponse } from "../interface/interface";
-
+import ipdAppointmentModel from "../models/ipdAppointmentModel";
 import type { Request, Response } from "express";
+import reportModel from "../models/reportModel";
+import referenceModel from "../models/referenceModel";
+
+
+
+interface Ireport {
+    doctorId: string,
+    hospitalId: string,
+    symptom: string,
+    prescription: string,
+    additionalNote: string,
+    additionalTests: string,
+    nextVisitSchedule: Date,
+    date: Date,
+}
+
+
 
 const register = async (req: Request, res: Response) => {
     try {
@@ -34,7 +51,7 @@ const register = async (req: Request, res: Response) => {
         // console.log("got response from hospital server !",data)
 
         if (!data.success) {
-            return res.json({ success: false, message: "Failed to fetch doctor details from hospital"+data.message } as IResponse)
+            return res.json({ success: false, message: "Failed to fetch doctor details from hospital" + data.message } as IResponse)
         }
 
         //data.doctorDetail
@@ -78,8 +95,8 @@ const login = async (req: Request, res: Response) => {
         }
 
         const data = await doctorModel.findOne({ 'doctorDetail.email': email }).select("+doctorDetail.password");
-        
-       
+
+
         if (!data) {
             return res.json({ success: false, message: "Invalid credentials for Doctor" } as IResponse);
         }
@@ -97,7 +114,7 @@ const login = async (req: Request, res: Response) => {
         res.status(200).json({ success: true, data: dtoken, message: "Login successful for Doctor" } as IResponse);
     } catch (error: any) {
         console.error('Error during login:', error);
-        res.json({ success: false, message: error.message+"from login backend" } as IResponse);
+        res.json({ success: false, message: error.message + "from login backend" } as IResponse);
     }
 }
 
@@ -119,17 +136,42 @@ const getDoctorDetail = async (req: Request, res: Response) => {
     }
 }
 
+
+
 const getAppointments = async (req: Request, res: Response) => {
     try {
-        const data = await patientModel.find({})
+        const data = await ipdAppointmentModel.find({}).populate('patientRef');
         res.json({ success: true, data: data } as IResponse)
     } catch (error: any) {
         res.json({ success: false, message: error.message } as IResponse)
     }
-
 }
 
 
+const addReport = async (req: Request, res: Response) => {
+    try {
+        const { appointmentId, report }: { appointmentId: string, report: Ireport } = req.body
+        console.log("report is : ", report)
+        console.log("appointmentId is : ", appointmentId)
+        if (!appointmentId || !report.symptom || !report.prescription || !report.additionalNote || !report.additionalTests || !report.nextVisitSchedule || !report.date) {
+            return res.json({ success: false, message: "All fields are required" } as IResponse)
+        }
+        const reportData = await reportModel.create(report)
+        if (!reportData) {
+            return res.json({ success: false, message: "Failed to create report" } as IResponse)
+        }
+        const patientData = await patientModel.findOne({ "appointment._id": appointmentId })
+        // const referData  = await referenceModel.findOneAndUpdate({_id:patientData.app})
+
+        if (!patientData) {
+            return res.json({ success: false, message: "patientData not found in system" } as IResponse)
+        }
+        console.log("patientData is : ", patientData)
 
 
-export { login, register, getDoctorDetail, getAppointments }
+        return res.json({ success: true, message: "Report added successfully" } as IResponse)
+    } catch (error: any) {
+        res.json({ success: false, message: error.message } as IResponse)
+    }
+}
+export { login, register, getDoctorDetail, getAppointments, addReport }
