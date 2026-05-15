@@ -228,8 +228,26 @@ const getPatientDetails = async (req: Request, res: Response) => {
 
 const getReport = async (req: Request, res: Response) => {
     try {
-        // Placeholder for future implementation
-        res.json({ success: false, message: "Not implemented yet" } as IResponse);
+        const { appointmentId } = req.body
+        console.log("appointmentId is :", appointmentId)
+
+        if (!appointmentId) {
+            return res.json({ success: false, message: "Appointment ID is required" } as IResponse)
+        }
+        const patientData = await patientModel.findOne({ "appointment._id": appointmentId }, { "appointment.$": 1 }).populate({
+            path: "appointment.referenceData.reference",
+            populate: {
+                path: "report"
+            }
+        })
+        if (!patientData) {
+            return res.json({ success: false, message: "patientData not found in system" } as IResponse)
+        }
+        patientData?.appointment[0]?.referenceData?.sort((a: any, b: any) => {
+            return b.createdAt.getTime() - a.createdAt.getTime();
+        })
+        console.log("patientData is :", patientData.appointment[0]?.referenceData[0])
+        res.json({ success: true, data: patientData.appointment[0]?.referenceData })
     } catch (error: any) {
         console.error('Error generating report:', error);
         res.json({ success: false, message: error.message } as IResponse)

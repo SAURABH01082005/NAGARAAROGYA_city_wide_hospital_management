@@ -42,6 +42,6 @@ const referenceSchema = new Schema<IReference>(
 );
 
 const referenceModel: Model<IReference> =
-  models.referenceModel || model<IReference>("referenceModel", referenceSchema);
+  models.referenceModel || model<IReference>("reference", referenceSchema);
 
 export default referenceModel;

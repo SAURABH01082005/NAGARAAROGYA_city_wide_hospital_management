@@ -1,11 +1,13 @@
 import express from "express";
-import { register, login, getDoctorDetail, getAppointments, addReport, getReport } from "../contollers/doctorController";
+import { register, login, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP } from "../contollers/doctorController";
 import authDoctor from "../middlewares/authDoctor";
 
 const doctorRoute = express.Router();
 
 
 doctorRoute.post("/register", register)
+doctorRoute.post("/register/email-verify", verifyEmail)
+doctorRoute.post("/register/resend-otp", resendOTP)
 doctorRoute.post("/login", login)
 doctorRoute.get("/get-doctordetails", authDoctor, getDoctorDetail)
 doctorRoute.post("/get-appointments", authDoctor, getAppointments)

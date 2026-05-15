@@ -109,6 +109,9 @@ const register = async (req: Request, res: Response) => {
     }
 }
 
+
+
+
 const login = async (req: Request, res: Response) => {
     console.log("login is called")
     try {
