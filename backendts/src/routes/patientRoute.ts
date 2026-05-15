@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { getReport, getPatientDetails, login, register, verifyEmail, resendOTP, addAppointment } from '../contollers/patientController';
+import { getReport, getPatientDetails, login, register, verifyEmail, resendOTP, addAppointment, getAppointments } from '../contollers/patientController';
 import authPatient from '../middlewares/authPatient';
 import { Request, Response } from 'express';
 const patientRoute = express.Router();
@@ -10,6 +10,8 @@ patientRoute.post("/register-patient-new-appointment-by-another-hospital", authP
 patientRoute.post("/register/email-verify", verifyEmail)
 patientRoute.post("/register/resend-otp", resendOTP)
 patientRoute.post("/login", login)
+patientRoute.post("/get-appointments", authPatient, getAppointments)
+patientRoute.post("/get-report", authPatient, getReport)
 // Temporary Test Route
 
 patientRoute.get("/get-patientdetails", authPatient, getPatientDetails)

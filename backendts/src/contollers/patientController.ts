@@ -236,6 +236,21 @@ const getReport = async (req: Request, res: Response) => {
     }
 }
 
+const getAppointments = async (req: Request, res: Response) => {
+    try {
+        const { patientId } = req.body
+        const data = await patientModel.findById(patientId)
+        if (!data) {
+            return res.json({ success: false, message: "Patient Not found in system" } as IResponse)
+        }
+        res.json({ success: true, data: data.appointment } as IResponse)
+
+
+    } catch (error: any) {
+        console.error('Error generating report:', error)
+        res.json({ success: false, message: error.message } as IResponse)
+    }
+}
 
 const addAppointment = async (req: Request, res: Response) => {
     const { itemId, hospitalId } = req.body
@@ -251,4 +266,4 @@ const addAppointment = async (req: Request, res: Response) => {
 
 
 }
-export { getReport, getPatientDetails, login, register, verifyEmail, resendOTP, addAppointment }
+export { getAppointments, getReport, getPatientDetails, login, register, verifyEmail, resendOTP, addAppointment }
