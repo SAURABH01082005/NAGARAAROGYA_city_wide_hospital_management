@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Hospital Management System - Queue & Bed Management</title>
+    <link rel="stylesheet" href="style1620.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h2>Login to Hospital Management System</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="loginRole">Select Role:</label>
+                    <select id="loginRole" class="form-control" required>
+                        <option value="">Choose your role</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Doctor">Doctor</option>
+                        <option value="Nurse">Nurse</option>
+                        <option value="Reception">Reception</option>
+                        <option value="Patient">Patient</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loginName">Name:</label>
+                    <input type="text" id="loginName" class="form-control" placeholder="Enter your name" required>
+                </div>
+                <button type="submit" class="btn btn--primary btn--full-width">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <h1>🏥 Smart Hospital System</h1>
+        </div>
+        <div class="navbar-user">
+            <span id="currentUser">Welcome</span>
+            <button id="logoutBtn" class="btn btn--secondary btn--sm">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="nav-menu">
+                <button class="nav-item active" data-section="dashboard">
+                    📊 Dashboard
+                </button>
+                <button class="nav-item" data-section="queue">
+                    👥 Queue Management
+                </button>
+                <button class="nav-item" data-section="beds">
+                    🛏️ Bed Management
+                </button>
+                <button class="nav-item" data-section="registration">
+                    📝 Patient Registration
+                </button>
+                <button class="nav-item" data-section="analytics">
+                    📈 Analytics
+                </button>
+                <button class="nav-item" data-section="city">
+                    🏙️ City Integration
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="section-header">
+                    <h2>Hospital Dashboard</h2>
+                    <div class="last-updated">Last updated: <span id="lastUpdated"></span></div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-card--primary">
+                        <div class="stat-icon">🛏️</div>
+                        <div class="stat-info">
+                            <h3 id="totalBeds">150</h3>
+                            <p>Total Beds</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card--success">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="availableBeds">42</h3>
+                            <p>Available Beds</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card--warning">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3 id="queueLength">30</h3>
+                            <p>Current Queue</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card--info">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-info">
+                            <h3 id="admissionsToday">15</h3>
+                            <p>Admissions Today</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Bed Occupancy Trends</h3>
+                        <canvas id="bedOccupancyChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Department Utilization</h3>
+                        <canvas id="departmentChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Alerts -->
+                <div class="alerts-section">
+                    <h3>Current Alerts</h3>
+                    <div id="alertsList" class="alerts-list">
+                        <div class="alert alert--warning">
+                            ⚠️ ICU at 95% capacity - Consider patient transfers
+                        </div>
+                        <div class="alert alert--info">
+                            ℹ️ Emergency department queue increasing
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Queue Management Section -->
+            <section id="queue" class="section">
+                <div class="section-header">
+                    <h2>Queue Management</h2>
+                    <div class="section-actions">
+                        <select id="departmentFilter" class="form-control">
+                            <option value="">All Departments</option>
+                            <option value="General">General</option>
+                            <option value="Cardiology">Cardiology</option>
+                            <option value="Orthopedics">Orthopedics</option>
+                            <option value="Emergency">Emergency</option>
+                            <option value="ICU">ICU</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="queue-container">
+                    <div class="queue-header">
+                        <div class="queue-stats">
+                            <span class="queue-stat">Total in Queue: <strong id="totalInQueue">30</strong></span>
+                            <span class="queue-stat">Average Wait: <strong id="avgWait">28 mins</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="queue-list" id="queueList">
+                        <!-- Queue items will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bed Management Section -->
+            <section id="beds" class="section">
+                <div class="section-header">
+                    <h2>Bed Management</h2>
+                    <div class="section-actions">
+                        <select id="wardFilter" class="form-control">
+                            <option value="">All Wards</option>
+                            <option value="General">General</option>
+                            <option value="ICU">ICU</option>
+                            <option value="Cardiology">Cardiology</option>
+                            <option value="Orthopedics">Orthopedics</option>
+                            <option value="Maternity">Maternity</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bed-legend">
+                    <span class="legend-item"><span class="bed-status available"></span> Available</span>
+                    <span class="legend-item"><span class="bed-status occupied"></span> Occupied</span>
+                    <span class="legend-item"><span class="bed-status cleaning"></span> Cleaning</span>
+                    <span class="legend-item"><span class="bed-status maintenance"></span> Maintenance</span>
+                </div>
+
+                <div class="beds-grid" id="bedsGrid">
+                    <!-- Bed grid will be populated by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Patient Registration Section -->
+            <section id="registration" class="section">
+                <div class="section-header">
+                    <h2>Patient Registration & Check-in</h2>
+                </div>
+
+                <div class="registration-tabs">
+                    <button class="tab-btn active" data-tab="new-patient">New Patient</button>
+                    <button class="tab-btn" data-tab="existing-patient">Existing Patient</button>
+                </div>
+
+                <div class="tab-content">
+                    <div id="new-patient" class="tab-panel active">
+                        <form id="newPatientForm" class="registration-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="patientName">Full Name</label>
+                                    <input type="text" id="patientName" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="patientAge">Age</label>
+                                    <input type="number" id="patientAge" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="patientPhone">Phone Number</label>
+                                    <input type="tel" id="patientPhone" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="patientDepartment">Department</label>
+                                    <select id="patientDepartment" class="form-control" required>
+                                        <option value="">Select Department</option>
+                                        <option value="General">General</option>
+                                        <option value="Cardiology">Cardiology</option>
+                                        <option value="Orthopedics">Orthopedics</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="patientPriority">Priority Level</label>
+                                <select id="patientPriority" class="form-control" required>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn--primary">Register Patient</button>
+                        </form>
+                    </div>
+
+                    <div id="existing-patient" class="tab-panel">
+                        <form id="existingPatientForm" class="registration-form">
+                            <div class="form-group">
+                                <label class="form-label" for="existingPatientId">Patient ID</label>
+                                <input type="text" id="existingPatientId" class="form-control" placeholder="Enter Patient ID" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="checkinDepartment">Department</label>
+                                <select id="checkinDepartment" class="form-control" required>
+                                    <option value="">Select Department</option>
+                                    <option value="General">General</option>
+                                    <option value="Cardiology">Cardiology</option>
+                                    <option value="Orthopedics">Orthopedics</option>
+                                    <option value="Emergency">Emergency</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn--primary">Check In</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="queue-number-display" id="queueNumberDisplay" style="display: none;">
+                    <div class="queue-number-card">
+                        <h3>Your Queue Number</h3>
+                        <div class="queue-number" id="assignedQueueNumber">Q001</div>
+                        <p>Estimated wait time: <span id="estimatedWait">15 mins</span></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics" class="section">
+                <div class="section-header">
+                    <h2>Analytics & Reports</h2>
+                    <div class="section-actions">
+                        <select id="analyticsTimeframe" class="form-control">
+                            <option value="daily">Daily</option>
+                            <option value="weekly" selected>Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="chart-container">
+                        <h3>Weekly Admissions</h3>
+                        <canvas id="admissionsChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Hourly Queue Length</h3>
+                        <canvas id="hourlyQueueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="analytics-summary">
+                    <h3>Key Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <h4>Peak Hours</h4>
+                            <p>10 AM - 2 PM</p>
+                        </div>
+                        <div class="metric-card">
+                            <h4>Avg Patient Flow</h4>
+                            <p>47 patients/day</p>
+                        </div>
+                        <div class="metric-card">
+                            <h4>Bed Turnover</h4>
+                            <p>1.8 patients/bed/day</p>
+                        </div>
+                        <div class="metric-card">
+                            <h4>Wait Time Reduction</h4>
+                            <p>12% this month</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- City Integration Section -->
+            <section id="city" class="section">
+                <div class="section-header">
+                    <h2>City-wide Hospital Network</h2>
+                    <div class="emergency-alert" style="display: none;">
+                        🚨 Emergency Mode: Coordinating with nearby hospitals
+                    </div>
+                </div>
+
+                <div class="city-stats">
+                    <div class="city-stat">
+                        <h4>Total City Beds</h4>
+                        <span>550</span>
+                    </div>
+                    <div class="city-stat">
+                        <h4>Available Now</h4>
+                        <span>103</span>
+                    </div>
+                    <div class="city-stat">
+                        <h4>Emergency Capacity</h4>
+                        <span>85%</span>
+                    </div>
+                </div>
+
+                <div class="hospitals-grid" id="hospitalsGrid">
+                    <!-- City hospitals will be populated by JavaScript -->
+                </div>
+
+                <div class="transfer-section">
+                    <h3>Patient Transfer Requests</h3>
+                    <div class="transfer-list">
+                        <div class="transfer-item">
+                            <div class="transfer-patient">Patient: John Doe (ICU)</div>
+                            <div class="transfer-to">To: Metro Medical Center</div>
+                            <div class="transfer-actions">
+                                <button class="btn btn--primary btn--sm">Approve</button>
+                                <button class="btn btn--outline btn--sm">Decline</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Bed Details Modal -->
+    <div id="bedModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="bedModalTitle">Bed Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="bedModalBody">
+                <!-- Bed details will be populated by JavaScript -->
+            </div>
+            <div class="modal-actions">
+                <button id="admitPatientBtn" class="btn btn--primary" style="display: none;">Admit Patient</button>
+                <button id="dischargePatientBtn" class="btn btn--outline" style="display: none;">Discharge</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app1620.js"></script>
+</body>
+</html>
