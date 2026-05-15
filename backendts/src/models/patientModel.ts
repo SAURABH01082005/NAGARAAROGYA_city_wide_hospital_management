@@ -1,5 +1,8 @@
 import mongoose, { Schema, model, models, Model, Types } from "mongoose";
 
+interface Ireference {
+    reference: Types.ObjectId,
+}
 
 interface Iappointment {
     detail: {
@@ -8,7 +11,7 @@ interface Iappointment {
         userId: string,
         docId: string,
     },
-    reference: Types.ObjectId[],
+    referenceData: Ireference[],
     isCompleted: boolean,
     date: Date
 }
@@ -32,7 +35,13 @@ interface Ipatient {
 
 
 
+const referenceInPatientSchema = new Schema<Ireference>({
+    reference: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "reference"
 
+    }
+}, { timestamps: true })
 
 
 const appointmentSchema = new Schema<Iappointment>({
@@ -47,14 +56,9 @@ const appointmentSchema = new Schema<Iappointment>({
         required: true
 
     },
-    reference: {
-        type: [
-            {
-                type: [Object],
-                ref: "Reference"
+    referenceData: {
+        type: [referenceInPatientSchema]
 
-            }
-        ]
     },
 
     isCompleted: {
@@ -63,7 +67,7 @@ const appointmentSchema = new Schema<Iappointment>({
     date: {
         type: Date, default: Date.now
     }
-}, { minimize: false })
+}, { minimize: false, timestamps: true })
 
 
 const patientSchema = new Schema<Ipatient>({

@@ -10,6 +10,7 @@ import referenceModel from '../models/referenceModel'
 import { Types } from 'mongoose'
 import { sendInfoConfirmationEmail } from '../contollers/email/emailController'
 import generatePassword from 'generate-password';
+import bcrypt from 'bcryptjs'
 
 
 interface Iappointment {
@@ -20,12 +21,13 @@ interface Iappointment {
         userId: string,
         docId: string,
     },
-    reference: Types.ObjectId[],
+    referenceData: { reference: Types.ObjectId }[],
     isCompleted: false,
     date: Date
 }
 
 interface IreferenceModel {
+    _id: Types.ObjectId,
     hospitalId: string;
     docId: string;
     referToHospitalId: string;
@@ -101,25 +103,30 @@ const getHospitals = async (req: Request, res: Response) => {
 }
 
 const registerPatientNewAppointmentByAnotherHospital = async (req: Request, res: Response) => {
+    const plainPassword = generatePassword.generate({
+        length: 8,
+        numbers: true,
+        symbols: true,
+        uppercase: true,
+        lowercase: true
+    })
+    const salt = await bcrypt.genSalt(10)
+    const hashPassword = await bcrypt.hash(plainPassword, salt)
     const { detail, patientDetail, docName, hospitalName } = req.body
     const patientDetailWithPassword = {
-        ...patientDetail, password: generatePassword.generate({
-            length: 8,
-            numbers: true,
-            symbols: true,
-            uppercase: true,
-            lowercase: true
-        })
+        ...patientDetail, password: hashPassword
     }
+
     const reference: IreferenceModel = {
+        _id: new Types.ObjectId(),
         hospitalId: detail.hospitalId,
         docId: detail.docId,
         referToHospitalId: detail.hospitalId,
         report: [],
-        reason: "IPD ADDMISSON",
+        reason: "IPD ADMISSION",
         date: new Date()
     }
-    const appointment: Iappointment = { _id: new Types.ObjectId(), detail, isCompleted: false, date: new Date(), reference: [] }
+    const appointment: Iappointment = { _id: new Types.ObjectId(), detail, isCompleted: false, date: new Date(), referenceData: [{ reference: reference._id }] }
 
     console.log("appointment is this ", appointment, "\npatientDetail is this : ", patientDetail, "\ndocName is : ", docName)
     try {
@@ -129,13 +136,12 @@ const registerPatientNewAppointmentByAnotherHospital = async (req: Request, res:
         if (!refdata) {
             return res.json({ success: false, message: "Reference not created" } as IResponse)
         }
-        appointment.reference.push(refdata._id as Types.ObjectId)
         if (!data) {
             data = await patientModel.create({ patientDetail: patientDetailWithPassword, appointment: [appointment] })
             if (!data) {
                 return res.json({ success: false, message: "Appointment not created" } as IResponse)
             }
-            await sendInfoConfirmationEmail(patientDetail.email, `Hello Mr./Ms. ${patientDetail.name} you are now registered to IPD in nagarAarogya system. Login to nagarAarogya by password : ${patientDetailWithPassword.password}.Your addmission is done by doctor ${docName} in hospital ${hospitalName}`)
+            await sendInfoConfirmationEmail(patientDetail.email, `Hello Mr./Ms. ${patientDetail.name} you are now registered to IPD in nagarAarogya system. Login to nagarAarogya by password : ${plainPassword}.Your addmission is done by doctor ${docName} in hospital ${hospitalName}`)
 
         } else {
             const insertedAppoint = await patientModel.updateOne({ "patientDetail.email": patientDetail.email }, { $push: { "appointment": appointment } })

@@ -10,6 +10,8 @@ import ipdAppointmentModel from "../models/ipdAppointmentModel";
 import type { Request, Response } from "express";
 import reportModel from "../models/reportModel";
 import referenceModel from "../models/referenceModel";
+import { sendInfoConfirmationEmail, sendVerificationEamil } from '../contollers/email/emailController'
+import pendingDoctorModel from "../models/pendingDoctorModel";
 
 
 
@@ -70,9 +72,33 @@ const register = async (req: Request, res: Response) => {
             image: data.data.doctorDetails.image,
         }
 
-        const doctorData = await doctorModel.create({ doctorDetail })
-        const dtoken = jwt.sign({ doctorId: doctorData._id }, process.env.JWT_SECRET_DOCTOR as string)
-        res.json({ success: true, message: "Doctor email and password registered successfully", data: dtoken } as IResponse)
+        const alreadyDoctor = await doctorModel.findOne({ "doctorDetail.email": email }).select("+doctorDetail.password")
+
+        if (alreadyDoctor) {
+            const isMatch = await bcrypt.compare(password, alreadyDoctor.doctorDetail.password)
+            if (!isMatch) {
+                return res.json({ success: false, message: "Wrong Credentials" } as IResponse)
+            }
+            const setCredentials = await doctorModel.findByIdAndUpdate(alreadyDoctor._id, { doctorDetail }, { new: true })
+            if (setCredentials) {
+                const dtoken = jwt.sign({ doctorId: setCredentials._id }, process.env.JWT_SECRET_DOCTOR as string)
+                return res.json({ success: true, data: dtoken, message: "Updated Profile Successfully", isAlreadyDoctor: true } as IResponse)
+            } else {
+                return res.json({ success: false, message: "unable to update in mongo" } as IResponse)
+            }
+        }
+
+        const verficationToken = Math.floor(Math.random() * 1000000)
+        const pendingData = await pendingDoctorModel.create({ doctorDetail, verficationToken })
+
+        if (!pendingData) {
+            return res.json({ success: false, message: "unable to push intermediate data in mongo" } as IResponse)
+        }
+
+        sendVerificationEamil(email, String(verficationToken))
+        console.log("verification token of doctor is ", verficationToken)
+
+        res.json({ success: true, message: "email has been sent successfully", data: pendingData._id } as IResponse)
 
 
 
@@ -140,7 +166,13 @@ const getDoctorDetail = async (req: Request, res: Response) => {
 
 const getAppointments = async (req: Request, res: Response) => {
     try {
-        const data = await ipdAppointmentModel.find({}).populate('patientRef');
+        const { doctorData } = req.body;
+        // console.log("doctor data here is : ", doctorData)
+        // console.log("req.body is : ", req.body)
+        if (!doctorData) {
+            return res.json({ success: false, message: "Doctor Data not found in system" } as IResponse)
+        }
+        const data = await ipdAppointmentModel.find({ hospitalRef: doctorData.doctorDetail.hospitalId }).populate('patientRef');
         res.json({ success: true, data: data } as IResponse)
     } catch (error: any) {
         res.json({ success: false, message: error.message } as IResponse)
@@ -149,10 +181,11 @@ const getAppointments = async (req: Request, res: Response) => {
 
 
 const addReport = async (req: Request, res: Response) => {
+
     try {
-        const { appointmentId, report }: { appointmentId: string, report: Ireport } = req.body
-        console.log("report is : ", report)
-        console.log("appointmentId is : ", appointmentId)
+        const { appointmentId, report, doctorData }: { appointmentId: string, report: Ireport, doctorData: any } = req.body
+        console.log("doctorData is : ", doctorData)
+
         if (!appointmentId || !report.symptom || !report.prescription || !report.additionalNote || !report.additionalTests || !report.nextVisitSchedule || !report.date) {
             return res.json({ success: false, message: "All fields are required" } as IResponse)
         }
@@ -160,13 +193,30 @@ const addReport = async (req: Request, res: Response) => {
         if (!reportData) {
             return res.json({ success: false, message: "Failed to create report" } as IResponse)
         }
-        const patientData = await patientModel.findOne({ "appointment._id": appointmentId })
-        // const referData  = await referenceModel.findOneAndUpdate({_id:patientData.app})
 
+        const patientData = await patientModel.findOne(
+            { "appointment._id": appointmentId },
+            { "appointment.$": 1, "patientDetail": 1 }
+        );
         if (!patientData) {
             return res.json({ success: false, message: "patientData not found in system" } as IResponse)
         }
+        patientData?.appointment[0]?.referenceData?.sort((a: any, b: any) => {
+            return b.createdAt.getTime() - a.createdAt.getTime();
+        })
+        const referenceId = patientData?.appointment[0]?.referenceData?.[0]?.reference
+        const refData = await referenceModel.findOneAndUpdate(
+            { _id: referenceId },
+            { $push: { report: reportData._id } },
+            { new: true }
+        );
+        if (!refData) {
+            return res.json({ success: false, message: "Failed to update reference" } as IResponse)
+        }
+        // console.log("reference id : ", referenceId)
         console.log("patientData is : ", patientData)
+        // console.log("reference data is : ", refData)
+        sendInfoConfirmationEmail(patientData.patientDetail.email, `Your report is added on nagarAarogay by doctor ${doctorData.doctorDetail.name} and hospital ${doctorData.doctorDetail.hospitalId}`);
 
 
         return res.json({ success: true, message: "Report added successfully" } as IResponse)
@@ -174,4 +224,80 @@ const addReport = async (req: Request, res: Response) => {
         res.json({ success: false, message: error.message } as IResponse)
     }
 }
-export { login, register, getDoctorDetail, getAppointments, addReport }
+
+const getReport = async (req: Request, res: Response) => {
+    console.log("getReport is called")
+    try {
+        const { appointmentId } = req.body
+        console.log("appointmentId is :", appointmentId)
+
+        if (!appointmentId) {
+            return res.json({ success: false, message: "Appointment ID is required" } as IResponse)
+        }
+        const patientData = await patientModel.findOne({ "appointment._id": appointmentId }, { "appointment.$": 1 })
+        console.log("patientData is :", patientData)
+        if (!patientData) {
+            return res.json({ success: false, message: "patientData not found in system" } as IResponse)
+        }
+        patientData?.appointment[0]?.referenceData?.sort((a: any, b: any) => {
+            return b.createdAt.getTime() - a.createdAt.getTime();
+        })
+        const referenceId = patientData?.appointment[0]?.referenceData?.[0]?.reference
+        const refData = await referenceModel.findById(referenceId).populate("report")
+        if (!refData) {
+            return res.json({ success: false, message: "Reference not found in system" } as IResponse)
+        }
+        console.log("refData.report is :", refData.report)
+
+
+        res.json({ success: true, data: refData.report } as IResponse)
+    } catch (error: any) {
+        res.json({ success: false, message: error.message } as IResponse)
+    }
+}
+
+
+
+const verifyEmail = async (req: Request, res: Response) => {
+    try {
+        const { otp, itemId } = req.body
+        const user = await pendingDoctorModel.findById(itemId).select("+doctorDetail.password")
+
+        if (!user || user.verficationToken !== Number(otp)) {
+            return res.json({ success: false, message: "Invalid or Expired Code" } as IResponse)
+        }
+
+        const doctorDetail = user.doctorDetail;
+        const setCredentials = await doctorModel.create({ doctorDetail })
+
+        await user.deleteOne()
+
+        const dtoken = jwt.sign({ doctorId: setCredentials._id }, process.env.JWT_SECRET_DOCTOR as string)
+        res.json({ success: true, message: "Doctor email and password registered successfully", data: dtoken } as IResponse)
+
+    } catch (error: any) {
+        console.error(error)
+        return res.json({ success: false, message: "internal server error" } as IResponse)
+    }
+}
+
+const resendOTP = async (req: Request, res: Response) => {
+    try {
+        const { itemId } = req.body
+        const data = await pendingDoctorModel.findById(itemId)
+        if (!data)
+            return res.json({ success: false, message: "Expired or Invalid OTP" } as IResponse)
+
+        const verficationToken = Math.floor(Math.random() * 1000000)
+        data.verficationToken = verficationToken
+        await data.save()
+
+        sendVerificationEamil(data.doctorDetail.email, String(verficationToken))
+
+        return res.json({ success: true, message: "New OTP sent" } as IResponse)
+    } catch (error: any) {
+        return res.json({ success: false, message: error.message } as IResponse)
+    }
+}
+
+export { login, register, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP }

@@ -4,7 +4,7 @@ import { DoctorContext } from '../../contexts/DoctorContext';
 
 function Appointments() {
 
-  const { dToken } = useContext(DoctorContext)
+  const { dToken, doctorData, getDoctorDetails } = useContext(DoctorContext)
   const [searchTerm, setSearchTerm] = useState("");
   const [appointments, setAppointments] = useState([]);
 
@@ -44,7 +44,8 @@ function Appointments() {
 
   const getAppointments = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/get-appointments`, { headers: { dtoken: dToken } })
+      console.log("doctor data is ******************************** ", doctorData)
+      const { data } = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/get-appointments`, { doctorData }, { headers: { dtoken: dToken } })
       if (data.success) {
         setAppointments(data.data);
       }
@@ -54,11 +55,16 @@ function Appointments() {
   }
 
   useEffect(() => {
-    getAppointments()
-  }, [])
+    if (doctorData) {
+      getAppointments()
+    }
+  }, [doctorData])
+
+
 
   // Tab Handlers
-  const handleViewPatient = (appointment) => {
+  const handleViewPatient = async (appointment) => {
+    console.log("appointment item is : ", appointment)
     const tabId = 'view_' + appointment._id;
     // If tab already exists, switch to it
     const existingTab = openTabs.find(tab => tab.id === tabId);
@@ -73,12 +79,33 @@ function Appointments() {
       return;
     }
 
+    // Fetch reports
+    let fetchedReports = [];
+    try {
+      console.log("appointment.appointmentRef is : ", appointment.appointmentRef)
+      const response = await axios.post(
+        `${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/get-report`, { appointmentId: appointment.appointmentRef },
+        {
+          headers: { dtoken: dToken },
+
+        }
+      );
+      if (response.data.success) {
+        fetchedReports = response.data.data || [];
+        fetchedReports.sort((a, b) => new Date(b.date) - new Date(a.date));
+      }
+      console.log("response.data is : ", response.data)
+    } catch (err) {
+      console.error("Error fetching reports:", err);
+    }
+
     // Open new tab
     const newTab = {
       id: tabId,
       type: 'view',
       title: appointment.patientRef?.patientDetail?.name || 'Unknown Patient',
-      data: appointment
+      data: appointment,
+      reports: fetchedReports
     };
 
     setOpenTabs([...openTabs, newTab]);
@@ -141,13 +168,14 @@ function Appointments() {
         `${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/add-report`,
         {
           appointmentId: appointmentData.appointmentRef,
-          report: reportData
+          report: reportData, doctorData
         },
         { headers: { dtoken: dToken } }
       );
 
+      console.log("reponse.data is : ", response.data)
       if (response.data.success) {
-        alert("Report submitted successfully!");
+        alert("Report submitted successfully!:message is ", response.data.message);
         setReportFormData({
           symptom: "",
           prescription: "",
@@ -267,6 +295,7 @@ function Appointments() {
     }
 
     // Render Patient Specific View
+    console.log("opendTabs is : ", openTabs)
     const activeTabObj = openTabs.find(tab => tab.id === activeTab);
     if (!activeTabObj) return null;
     const activeTabData = activeTabObj.data;
@@ -398,16 +427,36 @@ function Appointments() {
           </div>
         </div>
 
-        {/* Placeholder for Reports Grid */}
+        {/* Reports Grid */}
         <h4 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
           <svg className="w-5 h-5 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
           Lab Reports & Diagnostics
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-8 flex flex-col items-center justify-center text-center text-gray-500 shadow-inner min-h-[200px]">
-            <svg className="w-12 h-12 mx-auto mb-4 text-gray-600 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-            <p>No reports have been uploaded for this patient yet.</p>
-          </div>
+          {activeTabObj.reports && activeTabObj.reports.length > 0 ? (
+            activeTabObj.reports.map((report, idx) => (
+              <div key={idx} className="bg-gray-800/60 border border-gray-700 rounded-xl p-5 shadow-lg shadow-black/20 hover:border-[var(--color-secondary)]/50 transition-colors flex flex-col h-full">
+                <div className="flex justify-between items-start mb-3 border-b border-gray-700/50 pb-2">
+                  <h5 className="font-bold text-gray-200">Visit: {new Date(report.date).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</h5>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-[var(--color-secondary)]/20 text-[var(--color-secondary)] rounded-md">Report</span>
+                </div>
+                <div className="space-y-3 text-sm flex-grow">
+                  <div><span className="text-gray-400 block text-xs uppercase mb-0.5">Symptoms:</span> <span className="text-gray-300">{report.symptom}</span></div>
+                  <div><span className="text-gray-400 block text-xs uppercase mb-0.5">Prescription:</span> <span className="text-gray-300">{report.prescription}</span></div>
+                  {report.additionalNote && <div><span className="text-gray-400 block text-xs uppercase mb-0.5">Notes:</span> <span className="text-gray-300">{report.additionalNote}</span></div>}
+                  {report.additionalTests && <div><span className="text-gray-400 block text-xs uppercase mb-0.5">Tests:</span> <span className="text-gray-300">{report.additionalTests}</span></div>}
+                </div>
+                <div className="mt-4 pt-3 border-t border-gray-700/50">
+                  <p><span className="text-gray-400 text-xs uppercase">Next Visit:</span> <span className="text-[var(--color-secondary)] font-medium ml-1">{new Date(report.nextVisitSchedule).toLocaleDateString()}</span></p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-8 flex flex-col items-center justify-center text-center text-gray-500 shadow-inner min-h-[200px] col-span-full">
+              <svg className="w-12 h-12 mx-auto mb-4 text-gray-600 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+              <p>No reports have been uploaded for this patient yet.</p>
+            </div>
+          )}
         </div>
       </div>
     );
