@@ -100,6 +100,17 @@ const getHospitals = async (req: Request, res: Response) => {
     }
 }
 
+const getBedState = async (req: Request, res: Response) => {
+    try {
+        const mlUrl = process.env.ML_BED_API_URL || "http://localhost:8001";
+        const { data } = await axios.get(`${mlUrl}/hospitals`, { timeout: 5000 });
+        res.json({ success: true, data, message: "Bed state retrieved successfully" } as IResponse);
+    } catch (error: any) {
+        console.error('Error fetching bed state from ML service:', error.message);
+        res.json({ success: false, message: `ML service unreachable: ${error.message}` } as IResponse);
+    }
+}
+
 const registerPatientNewAppointmentByAnotherHospital = async (req: Request, res: Response) => {
     const { detail, patientDetail, docName, hospitalName } = req.body
     const patientDetailWithPassword = {
@@ -163,4 +174,4 @@ const registerPatientNewAppointmentByAnotherHospital = async (req: Request, res:
 
 
 
-export { getSpecialitiesAndAddress, getHospitals, registerPatientNewAppointmentByAnotherHospital }
+export { getSpecialitiesAndAddress, getHospitals, getBedState, registerPatientNewAppointmentByAnotherHospital }

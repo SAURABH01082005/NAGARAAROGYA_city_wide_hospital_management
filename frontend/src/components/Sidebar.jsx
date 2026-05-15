@@ -48,6 +48,11 @@ function Sidebar() {
                         <p className='hidden md:block'>Appointments</p>
                     </NavLink>
 
+                    <NavLink onClick={()=>changeSelectHandler("allocation")}  className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${ navSelect==="allocation" ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'/doctor/allocation'}>
+                        <img src={assetsAdmin.appointment_icon} alt="" />
+                        <p className='hidden md:block'>Allocation</p>
+                    </NavLink>
+
                     <NavLink onClick={()=>changeSelectHandler("assignResources")}  className={({ isActive }) => `flex items-center gap-3 px-3 py-3.5 md:px-9 md:min-w-72 cursor-pointer ${ navSelect==="assignResources" ? 'bg-[var(--color-secondary)] border-0 rounded-full  border-r-4 border-primary' : ''}`} to={'doctor/assign-resources'}>
                         <img src={assetsAdmin.people_icon} alt="" />
                         <p className='hidden md:block'>Assign Resources</p>

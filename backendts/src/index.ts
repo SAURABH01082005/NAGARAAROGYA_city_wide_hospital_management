@@ -11,7 +11,9 @@ import generalRoute from './routes/generalRoute';
 import {verifyConnection} from './config/email.config'
 import cors from 'cors';
 import generalOutRoute from './routes/generalOutRoute';
+const dns = require("dns");
 
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 const app = express();
 

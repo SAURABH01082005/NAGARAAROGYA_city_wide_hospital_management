@@ -11,6 +11,7 @@ import Profile from './components/patient/Profile'
 import DoctorDashboard from './components/doctor/DoctorDashboard'
 import Appointments from './components/doctor/Appointments.jsx'
 import AssignResources from './components/doctor/AssignResources'
+import Allocation from './components/doctor/Allocation'
 import AddPatient from './components/doctor/AddPatient'
 import PatientReport from './components/doctor/PatientReport.jsx'
 import PatientUploadReport from './components/doctor/PatientUploadReport.jsx'
@@ -67,6 +68,7 @@ function App() {
                 <Route path='ptient-report' element={<PatientReport />} />
                 <Route path='patient-upload-report' element={<PatientUploadReport />} />
               </Route>
+              <Route path='allocation' element={<Allocation />} />
               <Route path='assign-resources' element={<AssignResources />} />
               <Route path='add-patient' element={<AddPatient />} />
             </Route>

@@ -4,9 +4,13 @@ import { DoctorContext } from '../../contexts/DoctorContext';
 
 function Appointments() {
 
-  const { dToken } = useContext(DoctorContext)
+  const { dToken, intakePatients } = useContext(DoctorContext)
   const [searchTerm, setSearchTerm] = useState("");
   const [appointments, setAppointments] = useState([]);
+
+  // Helpers for both data shapes (backend appointment vs Dashboard intake)
+  const getName = (item) => item?.intake?.name || item?.patientRef?.patientDetail?.name || 'Unknown Patient';
+  const getCondition = (item) => item?.intake?.condition || '—';
 
   // Tab State
   const [activeTab, setActiveTab] = useState('main');
@@ -35,11 +39,12 @@ function Appointments() {
     return Math.abs(age_dt.getUTCFullYear() - 1970);
   }
 
-  const filteredPatientList = appointments.filter((appointment) => {
+  // Merge backend appointments with dashboard-intake patients (newest first)
+  const mergedPatientList = [...(intakePatients || []), ...appointments];
+
+  const filteredPatientList = mergedPatientList.filter((item) => {
     if (!searchTerm) return true;
-    const searchLower = searchTerm.toLowerCase();
-    const patientName = appointment.patientRef?.patientDetail?.name || "";
-    return patientName.toLowerCase().includes(searchLower);
+    return getName(item).toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const getAppointments = async () => {
@@ -77,7 +82,7 @@ function Appointments() {
     const newTab = {
       id: tabId,
       type: 'view',
-      title: appointment.patientRef?.patientDetail?.name || 'Unknown Patient',
+      title: getName(appointment),
       data: appointment
     };
 
@@ -104,7 +109,7 @@ function Appointments() {
     const newTab = {
       id: tabId,
       type: 'add_report',
-      title: 'Add Report: ' + (appointment.patientRef?.patientDetail?.name?.split(' ')[0] || 'Patient'),
+      title: 'Add Report: ' + (getName(appointment).split(' ')[0] || 'Patient'),
       data: appointment
     };
 
@@ -206,17 +211,22 @@ function Appointments() {
           {/* Table Container */}
           <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/70 rounded-2xl shadow-2xl shadow-black/50 p-6 md:p-8 lg:p-10">
             <div className='text-sm max-h-[80vh] min-h-[50vh] overflow-y-scroll no-scrollbar'>
-              <div className='max-sm:hidden grid grid-cols-[0.5fr_2.5fr_1fr_2fr_1fr_1fr] gap-1 py-3 px-6 border border-gray-700 rounded-2xl bg-[#1C2635] text-gray-300 font-semibold mb-4'>
+              <div className='max-sm:hidden grid grid-cols-[0.5fr_2fr_0.7fr_1.8fr_1.6fr_1fr_1fr] gap-1 py-3 px-6 border border-gray-700 rounded-2xl bg-[#1C2635] text-gray-300 font-semibold mb-4'>
                 <p>#</p>
                 <p>Patient</p>
                 <p>Age</p>
+                <p>Condition</p>
                 <p>Date & Time</p>
                 <p>Status</p>
                 <p>Action</p>
               </div>
 
-              {filteredPatientList.length > 0 ? filteredPatientList.map((item, index) => (
-                <div className='flex flex-wrap justify-between max-sm:gap-5 max-sm:text-base sm:grid grid-cols-[0.5fr_2.5fr_1fr_2fr_1fr_1fr] gap-1 items-center text-gray-400 py-3 px-6 border-b border-gray-800/50 hover:bg-gray-800/40 transition-colors rounded-lg mb-1' key={item._id || index}>
+              {filteredPatientList.length > 0 ? filteredPatientList.map((item, index) => {
+                const isIntake = item.source === 'intake';
+                const name = getName(item);
+                const age = isIntake ? item.intake.age : calculateAge(item.patientRef?.patientDetail?.dob);
+                return (
+                <div className='flex flex-wrap justify-between max-sm:gap-5 max-sm:text-base sm:grid grid-cols-[0.5fr_2fr_0.7fr_1.8fr_1.6fr_1fr_1fr] gap-1 items-center text-gray-400 py-3 px-6 border-b border-gray-800/50 hover:bg-gray-800/40 transition-colors rounded-lg mb-1' key={item._id || index}>
                   <p className='max-sm:hidden'>{index + 1}</p>
 
                   <div className='flex items-center gap-3'>
@@ -224,14 +234,23 @@ function Appointments() {
                       {item.patientRef?.patientDetail?.image ? (
                         <img src={item.patientRef.patientDetail.image} alt="Patient" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-gray-400 font-bold">{item.patientRef?.patientDetail?.name?.charAt(0) || '?'}</span>
+                        <span className="text-gray-400 font-bold">{name?.charAt(0) || '?'}</span>
                       )}
                     </div>
-                    <p className='text-gray-200 font-medium text-sm'>{item.patientRef?.patientDetail?.name || 'Unknown Patient'}</p>
+                    <div className='flex items-center gap-2'>
+                      <p className='text-gray-200 font-medium text-sm'>{name}</p>
+                      {isIntake && (
+                        <span className="text-[9px] uppercase tracking-wider font-bold border border-[var(--color-secondary)]/50 text-[var(--color-secondary)] bg-[var(--color-secondary)]/10 px-1.5 py-0.5 rounded-full">
+                          Intake
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <p className='text-gray-300 text-sm'>
-                    {calculateAge(item.patientRef?.patientDetail?.dob)}
+                  <p className='text-gray-300 text-sm'>{age}</p>
+
+                  <p className='text-sm text-gray-300 truncate' title={getCondition(item)}>
+                    {getCondition(item)}
                   </p>
 
                   <p className='text-sm text-gray-300'>
@@ -252,7 +271,8 @@ function Appointments() {
                     </button>
                   </div>
                 </div>
-              )) : (
+                );
+              }) : (
                 <div className="text-center py-20 text-gray-500">
                   <svg className="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
@@ -368,6 +388,10 @@ function Appointments() {
     }
 
     // Render View View
+    const isIntakeView = activeTabData?.source === 'intake';
+    const viewName = getName(activeTabData);
+    const viewAge = isIntakeView ? activeTabData.intake.age : calculateAge(activeTabData.patientRef?.patientDetail?.dob);
+
     return (
       <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/70 rounded-2xl shadow-2xl shadow-black/50 p-6 md:p-8 lg:p-10 min-h-[60vh] animate-fadeIn">
         <div className="flex justify-between items-start mb-8 border-b border-gray-800/50 pb-6">
@@ -376,39 +400,87 @@ function Appointments() {
               {activeTabData.patientRef?.patientDetail?.image ? (
                 <img src={activeTabData.patientRef.patientDetail.image} alt="Patient" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-gray-300 font-bold text-xl">{activeTabData.patientRef?.patientDetail?.name?.charAt(0) || '?'}</span>
+                <span className="text-gray-300 font-bold text-xl">{viewName?.charAt(0) || '?'}</span>
               )}
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-100">{activeTabData.patientRef?.patientDetail?.name || 'Unknown Patient'}</h3>
-              <p className="text-[var(--color-secondary)] text-sm font-medium">Patient Reports & Medical History</p>
+              <div className="flex items-center gap-3">
+                <h3 className="text-2xl font-bold text-gray-100">{viewName}</h3>
+                {isIntakeView && (
+                  <span className="text-[10px] uppercase tracking-wider font-bold border border-[var(--color-secondary)]/50 text-[var(--color-secondary)] bg-[var(--color-secondary)]/10 px-2 py-0.5 rounded-full">
+                    Intake
+                  </span>
+                )}
+              </div>
+              <p className="text-[var(--color-secondary)] text-sm font-medium">
+                {isIntakeView ? 'New Patient Intake Details' : 'Patient Reports & Medical History'}
+              </p>
             </div>
           </div>
           <div className="text-right flex flex-col items-end gap-3">
             <div className="text-right">
-              <p className="text-gray-400 text-sm">Age: <span className="text-gray-200">{calculateAge(activeTabData.patientRef?.patientDetail?.dob)}</span></p>
+              <p className="text-gray-400 text-sm">Age: <span className="text-gray-200">{viewAge}</span></p>
               <p className="text-gray-400 text-sm">Admitted: <span className="text-gray-200">{new Date(activeTabData.createdAt).toLocaleDateString()}</span></p>
             </div>
-            <button
-              onClick={() => handleAddReport(activeTabData)}
-              className="flex items-center gap-2 bg-[var(--color-secondary)] hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-black/20">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-              Add Report
-            </button>
+            {!isIntakeView && (
+              <button
+                onClick={() => handleAddReport(activeTabData)}
+                className="flex items-center gap-2 bg-[var(--color-secondary)] hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-black/20">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                Add Report
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Placeholder for Reports Grid */}
-        <h4 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
-          <svg className="w-5 h-5 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-          Lab Reports & Diagnostics
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-8 flex flex-col items-center justify-center text-center text-gray-500 shadow-inner min-h-[200px]">
-            <svg className="w-12 h-12 mx-auto mb-4 text-gray-600 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-            <p>No reports have been uploaded for this patient yet.</p>
-          </div>
-        </div>
+        {isIntakeView ? (
+          <>
+            <h4 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Triage Details
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-5 shadow-inner">
+                <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">Gender</p>
+                <p className="text-xl font-bold text-gray-100">{activeTabData.intake.gender}</p>
+              </div>
+              <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-5 shadow-inner">
+                <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">Age</p>
+                <p className="text-xl font-bold text-gray-100">{activeTabData.intake.age} yrs</p>
+              </div>
+              <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-5 shadow-inner">
+                <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">Waiting Time</p>
+                <p className="text-xl font-bold text-gray-100">{activeTabData.intake.waitingTime} min</p>
+              </div>
+              <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-5 shadow-inner sm:col-span-2 lg:col-span-3">
+                <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">Condition</p>
+                <p className="text-xl font-bold text-gray-100">{activeTabData.intake.condition}</p>
+              </div>
+              <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-5 shadow-inner sm:col-span-2 lg:col-span-3">
+                <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">Procedure</p>
+                <p className="text-xl font-bold text-gray-100">{activeTabData.intake.procedure}</p>
+              </div>
+            </div>
+            <div className="mt-8 bg-gray-800/30 border border-dashed border-gray-700 rounded-xl p-5 text-gray-400 text-sm">
+              Triage result will appear here once the ML criticality model is wired in.
+            </div>
+          </>
+        ) : (
+          <>
+            <h4 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              Lab Reports & Diagnostics
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-8 flex flex-col items-center justify-center text-center text-gray-500 shadow-inner min-h-[200px]">
+                <svg className="w-12 h-12 mx-auto mb-4 text-gray-600 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <p>No reports have been uploaded for this patient yet.</p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }
