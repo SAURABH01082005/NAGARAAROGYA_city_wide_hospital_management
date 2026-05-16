@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 
 function AssignResources() {
   const [searchTerm, setSearchTerm] = useState("")
-  const { dToken } = useContext(DoctorContext)
+  const { dToken, doctorData, getDoctorDetails } = useContext(DoctorContext)
   const [hospitalBedData, setHospitalBedData] = useState([])
   const [expandedBeds, setExpandedBeds] = useState({})
 
@@ -27,22 +27,42 @@ function AssignResources() {
 
   useEffect(() => {
     getAllHospitalBeds()
+    getDoctorDetails()
   }, [])
 
-  const filteredCards = useMemo(() => {
-    if (!searchTerm) return hospitalBedData
+  // Doctor's own hospital ID
+  const doctorHospitalId = doctorData?.doctorDetail?.hospitalId
 
-    const searchLower = searchTerm.toLowerCase()
-    return hospitalBedData
-      .map(hospital => {
-        const filteredBeds = hospital.beds.filter(bedType =>
-          bedType._id.toLowerCase().includes(searchLower) ||
-          hospital.hospitalName.toLowerCase().includes(searchLower)
-        )
-        return { ...hospital, beds: filteredBeds }
-      })
-      .filter(hospital => hospital.beds.length > 0)
-  }, [hospitalBedData, searchTerm])
+  // Filtered + Doctor's hospital on top
+  const filteredCards = useMemo(() => {
+    if (!hospitalBedData.length) return []
+
+    let result = hospitalBedData
+
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      result = hospitalBedData
+        .map(hospital => {
+          const filteredBeds = hospital.beds.filter(bedType =>
+            bedType._id.toLowerCase().includes(searchLower) ||
+            hospital.hospitalName.toLowerCase().includes(searchLower)
+          )
+          return { ...hospital, beds: filteredBeds }
+        })
+        .filter(hospital => hospital.beds.length > 0)
+    }
+
+    // Put doctor's hospital on top
+    if (doctorHospitalId) {
+      const doctorHospitalIndex = result.findIndex(h => h.hospitalId === doctorHospitalId)
+      if (doctorHospitalIndex > 0) {
+        const doctorHospital = result.splice(doctorHospitalIndex, 1)[0]
+        result.unshift(doctorHospital)
+      }
+    }
+
+    return result
+  }, [hospitalBedData, searchTerm, doctorHospitalId])
 
   const toggleBedList = (hospitalId, bedTypeId) => {
     const key = `${hospitalId}-${bedTypeId}`
@@ -90,6 +110,16 @@ function AssignResources() {
           </div>
         </div>
 
+        {/* Doctor's Hospital Highlight */}
+        {doctorHospitalId && (
+          <div className="mb-6 p-4 bg-emerald-900/30 border border-emerald-500/30 rounded-2xl flex items-center gap-3">
+            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
+            <span className="font-medium text-emerald-400">
+              Your Hospital: <span className="text-white">{doctorHospitalId}</span>
+            </span>
+          </div>
+        )}
+
         {/* Search Bar */}
         <div className="bg-gray-900/70 backdrop-blur-md border border-gray-800/80 rounded-2xl shadow-xl shadow-black/40 p-5 md:p-6 mb-10">
           <div className="max-w-2xl mx-auto">
@@ -113,102 +143,115 @@ function AssignResources() {
         <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/70 rounded-2xl shadow-2xl shadow-black/50 p-6 md:p-8">
           {filteredCards.length > 0 ? (
             <div className="space-y-12">
-              {filteredCards.map((hospital) => (
-                <div key={hospital.hospitalId}>
-                  {/* Hospital Header */}
-                  <div className="mb-6">
-                    <h3 className="text-2xl font-bold">{hospital.hospitalName}</h3>
-                    <p className="text-gray-400 text-sm">{hospital.hospitalId}</p>
-                  </div>
+              {filteredCards.map((hospital) => {
+                const isMyHospital = hospital.hospitalId === doctorHospitalId
 
-                  {/* Bed Type Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {hospital.beds.map((bedType) => {
-                      const occupancy = getOccupancyPercentage(bedType.availalbe, bedType.total)
-                      const isExpanded = expandedBeds[`${hospital.hospitalId}-${bedType._id}`]
+                return (
+                  <div key={hospital.hospitalId}>
+                    {/* Hospital Header */}
+                    <div className="mb-6 flex items-center gap-4">
+                      <div>
+                        <h3 className="text-2xl font-bold flex items-center gap-3">
+                          {hospital.hospitalName}
+                          {isMyHospital && (
+                            <span className="text-xs font-semibold px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 rounded-lg">
+                              MY HOSPITAL
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-gray-400 text-sm">{hospital.hospitalId}</p>
+                      </div>
+                    </div>
 
-                      return (
-                        <div
-                          key={bedType._id}
-                          className="bg-gray-800/80 border border-gray-700/80 rounded-2xl p-6 flex flex-col h-[420px] hover:border-[var(--color-secondary)]/50 transition-all"
-                        >
-                          {/* Header */}
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <span className="uppercase text-xs tracking-widest font-semibold text-gray-400">
-                                {bedType._id.replace(/_/g, ' ').toUpperCase()}
-                              </span>
-                              <div className="text-4xl font-bold mt-2">
-                                {bedType.availalbe} <span className="text-lg font-normal text-gray-400">/ {bedType.total}</span>
+                    {/* Bed Type Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {hospital.beds.map((bedType) => {
+                        const occupancy = getOccupancyPercentage(bedType.availalbe, bedType.total)
+                        const isExpanded = expandedBeds[`${hospital.hospitalId}-${bedType._id}`]
+
+                        return (
+                          <div
+                            key={bedType._id}
+                            className="bg-gray-800/80 border border-gray-700/80 rounded-2xl p-6 flex flex-col h-[420px] hover:border-[var(--color-secondary)]/50 transition-all"
+                          >
+                            {/* Header */}
+                            <div className="flex justify-between items-start mb-4">
+                              <div>
+                                <span className="uppercase text-xs tracking-widest font-semibold text-gray-400">
+                                  {bedType._id.replace(/_/g, ' ').toUpperCase()}
+                                </span>
+                                <div className="text-4xl font-bold mt-2">
+                                  {bedType.availalbe} <span className="text-lg font-normal text-gray-400">/ {bedType.total}</span>
+                                </div>
+                              </div>
+
+                              <div className={`px-4 py-1.5 rounded-xl text-sm font-bold border ${getStatusBg(bedType.availalbe, bedType.total)}`}>
+                                {occupancy}%
                               </div>
                             </div>
 
-                            <div className={`px-4 py-1.5 rounded-xl text-sm font-bold border ${getStatusBg(bedType.availalbe, bedType.total)}`}>
-                              {occupancy}%
+                            {/* Occupancy Progress Bar */}
+                            <div className="mb-6">
+                              <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+                                <span>Available</span>
+                                <span>Occupied</span>
+                              </div>
+                              <div className="w-full bg-gray-900 rounded-full h-2.5 overflow-hidden">
+                                <div
+                                  className={`h-2.5 rounded-full transition-all duration-500 ${getStatusColor(occupancy)}`}
+                                  style={{ width: `${occupancy}%` }}
+                                ></div>
+                              </div>
                             </div>
+
+                            {/* Average Wait Time */}
+                            <div className="mb-6">
+                              <span className="text-xs text-gray-400 block">Avg. Waiting Time</span>
+                              <span className="text-lg font-semibold text-[var(--color-secondary)]">
+                                {getAvgWaitTime(bedType)}
+                              </span>
+                            </div>
+
+                            {/* View Beds Dropdown */}
+                            <button
+                              onClick={() => toggleBedList(hospital.hospitalId, bedType._id)}
+                              className="flex items-center gap-2 text-sm text-gray-300 hover:text-white mb-4 transition-colors"
+                            >
+                              <span>{isExpanded ? 'Hide' : 'View'} Individual Beds</span>
+                              <span className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
+                            </button>
+
+                            {/* Expandable Bed List */}
+                            {isExpanded && (
+                              <div className="bg-gray-900/50 rounded-xl p-3 max-h-28 overflow-y-auto mb-6 text-sm font-mono space-y-1">
+                                {bedType.beds.map((bed) => (
+                                  <div key={bed.bedId} className="flex justify-between">
+                                    <span>{bed.bedId}</span>
+                                    <span className={bed.available ? 'text-green-400' : 'text-red-400'}>
+                                      {bed.available ? 'Available' : 'Occupied'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Request Button */}
+                            <button
+                              onClick={() => handleRequestBed(hospital.hospitalId,bedType._id)}
+                              disabled={bedType.availalbe === 0}
+                              className="mt-auto w-full py-3.5 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-[var(--color-secondary)] hover:bg-blue-600 active:scale-[0.98]"
+                            >
+                              {bedType.availalbe > 0 ? 'Request Bed' : 'No Beds Available'}
+                            </button>
                           </div>
+                        )
+                      })}
+                    </div>
 
-                          {/* Occupancy Progress Bar */}
-                          <div className="mb-6">
-                            <div className="flex justify-between text-xs text-gray-400 mb-1.5">
-                              <span>Available</span>
-                              <span>Occupied</span>
-                            </div>
-                            <div className="w-full bg-gray-900 rounded-full h-2.5 overflow-hidden">
-                              <div
-                                className={`h-2.5 rounded-full transition-all duration-500 ${getStatusColor(occupancy)}`}
-                                style={{ width: `${occupancy}%` }}
-                              ></div>
-                            </div>
-                          </div>
-
-                          {/* Average Wait Time */}
-                          <div className="mb-6">
-                            <span className="text-xs text-gray-400 block">Avg. Waiting Time</span>
-                            <span className="text-lg font-semibold text-[var(--color-secondary)]">
-                              {getAvgWaitTime(bedType)}
-                            </span>
-                          </div>
-
-                          {/* View Beds Dropdown */}
-                          <button
-                            onClick={() => toggleBedList(hospital.hospitalId, bedType._id)}
-                            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white mb-4 transition-colors"
-                          >
-                            <span>{isExpanded ? 'Hide' : 'View'} Individual Beds</span>
-                            <span className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
-                          </button>
-
-                          {/* Expandable Bed List */}
-                          {isExpanded && (
-                            <div className="bg-gray-900/50 rounded-xl p-3 max-h-28 overflow-y-auto mb-6 text-sm font-mono space-y-1">
-                              {bedType.beds.map((bed) => (
-                                <div key={bed.bedId} className="flex justify-between">
-                                  <span>{bed.bedId}</span>
-                                  <span className={bed.available ? 'text-green-400' : 'text-red-400'}>
-                                    {bed.available ? 'Available' : 'Occupied'}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Request Button */}
-                          <button
-                            onClick={() => handleRequestBed(hospital.hospitalId, bedType._id)}
-                            disabled={bedType.availalbe === 0}
-                            className="mt-auto w-full py-3.5 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-[var(--color-secondary)] hover:bg-blue-600 active:scale-[0.98]"
-                          >
-                            {bedType.availalbe > 0 ? 'Request Bed' : 'No Beds Available'}
-                          </button>
-                        </div>
-                      )
-                    })}
+                    <hr className="border-gray-700/70 mt-12" />
                   </div>
-
-                  <hr className="border-gray-700/70 mt-12" />
-                </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
             <div className="text-center py-24 text-gray-400">

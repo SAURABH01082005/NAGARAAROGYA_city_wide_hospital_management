@@ -12,7 +12,7 @@ import reportModel from "../models/reportModel";
 import referenceModel from "../models/referenceModel";
 import { sendInfoConfirmationEmail, sendVerificationEamil } from '../contollers/email/emailController'
 import pendingDoctorModel from "../models/pendingDoctorModel";
-import e from "express";
+import bedQueueModel from "../models/bedQueue";
 
 
 
@@ -332,22 +332,7 @@ const getAllHospitalBeds = async (req: Request, res: Response) => {
         hospitalBedsData=hospitalBedsData.filter((item)=>{
             return item !== null  
         })
-        hospitalBedsData.map((item)=>{
-            item?.beds.map((bed:any)=>{
-                let availalble=0;
-                let total=0;
-                let minTime =Number.MAX_VALUE ;
-                bed?.beds.map((b:any)=>{
-                    if(b.available) availalble++ , minTime = 0;
-                    else minTime =b.engageSchedule.dispatchDate -  b.engageSchedule.assignDate
-                    total ++;
-                    
-                })
-                bed.availalbe=availalble;
-                bed.total=total;
-                bed.minTime = minTime;
-            })
-        })
+       
         console.log("hospitalBedsData is : ", hospitalBedsData)
         res.json({ success: true, data: hospitalBedsData } as IResponse)
 
@@ -357,4 +342,25 @@ const getAllHospitalBeds = async (req: Request, res: Response) => {
     }
 }
 
-export { getAllHospitalBeds, login, register, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP }
+const bedQueue = async (req: Request, res: Response) => {
+    const {bedType,hospitalId,NApatientEmail,NAdoctorEmail,bedScore} = req.body
+    try {
+        const data = await bedQueueModel.create({
+            bedType: bedType,
+            hospitalId: hospitalId,
+            NApatientEmail: NApatientEmail,
+            NAdoctorEmail: NAdoctorEmail,
+            bedScore: bedScore
+        })
+        if(!data){
+            return res.json({ success: false, message: "Failed to add to bed queue" } as IResponse)
+        }
+        res.json({ success: true, message: "Added to bed queue" } as IResponse)
+    } catch (error: any) {
+        return res.json({ success: false, message: error.message } as IResponse)
+    }
+}
+
+
+
+export {bedQueue, getAllHospitalBeds, login, register, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP }

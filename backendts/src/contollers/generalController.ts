@@ -11,6 +11,7 @@ import { Types } from 'mongoose'
 import { sendInfoConfirmationEmail } from '../contollers/email/emailController'
 import generatePassword from 'generate-password';
 import bcrypt from 'bcryptjs'
+import bedQueueModel from '../models/bedQueue'
 
 
 interface Iappointment {
@@ -168,5 +169,21 @@ const registerPatientNewAppointmentByAnotherHospital = async (req: Request, res:
 }
 
 
+const deletePatientFromBedQueue = async (req: Request, res: Response) => {
+    const { NApatientEmail, bedType } = req.body
+    try {
+        const data = await bedQueueModel.findOneAndDelete({ NApatientEmail, bedType })
+        if (!data) {
+            return res.json({ success: false, message: "Patient not found in bed queue" } as IResponse)
+        }
+        sendInfoConfirmationEmail(NApatientEmail, `Hello Mr./Ms. ${NApatientEmail} you have been removed from the bed queue for bed type ${bedType}. Please contact the hospital ${data.hospitalId} and doctor ${data.NAdoctorEmail} for more details.`)
+        sendInfoConfirmationEmail(data.NAdoctorEmail, `Hello Doctor ${data.NAdoctorEmail} patient with email ${NApatientEmail} has been removed from the bed queue for bed type ${bedType} in your hospital. Please contact the hospital for more details.`)
+        res.json({ success: true, message: "Patient removed from bed queue" } as IResponse)
+    } catch (error: any) {
+        return res.json({ success: false, message: error.message } as IResponse)
+    }
+}
 
-export { getSpecialitiesAndAddress, getHospitals, registerPatientNewAppointmentByAnotherHospital }
+
+
+export { deletePatientFromBedQueue,getSpecialitiesAndAddress, getHospitals, registerPatientNewAppointmentByAnotherHospital }

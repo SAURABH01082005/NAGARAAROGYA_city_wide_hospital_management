@@ -301,6 +301,17 @@ function Appointments() {
       )
     }
 
+    //copy function
+    const copyToClipboard = (text, label = "Text") => {
+      navigator.clipboard.writeText(text).then(() => {
+        toast.success(`${label} copied successfully!`, {
+          autoClose: 2000,
+        });
+      }).catch(() => {
+        toast.error("Failed to copy");
+      });
+    };
+
     // Render Patient Specific View
     console.log("opendTabs is : ", openTabs)
     const activeTabObj = openTabs.find(tab => tab.id === activeTab);
@@ -416,8 +427,35 @@ function Appointments() {
               )}
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-100">{activeTabData.patientRef?.patientDetail?.name || 'Unknown Patient'}</h3>
-              <p className="text-[var(--color-secondary)] text-sm font-medium">Patient Reports & Medical History</p>
+              <h3 className="text-2xl font-bold text-gray-100">
+                {activeTabData.patientRef?.patientDetail?.name || 'Unknown Patient'}
+              </h3>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-[var(--color-secondary)] text-sm font-medium">
+                  {activeTabData.patientRef?.patientDetail?.email || 'Email not available'}
+                </p>
+
+                {/* Copy Button */}
+                {activeTabData.patientRef?.patientDetail?.email && (
+                  <button
+                    onClick={() => copyToClipboard(activeTabData.patientRef.patientDetail.email, "Email")}
+                    className="text-gray-400 hover:text-gray-200 transition-colors p-1 rounded hover:bg-gray-700"
+                    title="Copy Email"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.25}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16v-4m4 4v4m4-8v8m4-4v-4m-16 0h.01M12 4v.01" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-1M16 4h2a2 2 0 012 2v1" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           <div className="text-right flex flex-col items-end gap-3">
