@@ -1,6 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react'
 import axios from 'axios';
 import { DoctorContext } from '../../contexts/DoctorContext';
+import { toast } from 'react-toastify'
+
 
 function Appointments() {
 
@@ -75,7 +77,8 @@ function Appointments() {
 
     // Check max tabs limit
     if (openTabs.length >= 2) {
-      alert("You can only open a maximum of 2 tabs at a time. Please close one first.");
+      // alert("You can only open a maximum of 2 tabs at a time. Please close one first.");
+      toast.warning("You can only open a maximum of 2 tabs at a time. Please close one first.")
       return;
     }
 
@@ -123,7 +126,8 @@ function Appointments() {
 
     // Check max tabs limit
     if (openTabs.length >= 2) {
-      alert("You can only open a maximum of 2 tabs at a time. Please close one first.");
+      // alert("You can only open a maximum of 2 tabs at a time. Please close one first.");
+      toast.warn("You can only open a maximum of 2 tabs at a time. Please close one first.")
       return;
     }
 
@@ -175,7 +179,8 @@ function Appointments() {
 
       console.log("reponse.data is : ", response.data)
       if (response.data.success) {
-        alert("Report submitted successfully!:message is ", response.data.message);
+        // alert("Report submitted successfully!:message is ", response.data.message);
+        toast.success("Report submitted successfully!", response.data.message)
         setReportFormData({
           symptom: "",
           prescription: "",
@@ -185,11 +190,13 @@ function Appointments() {
         });
         handleCloseTab(e, activeTab);
       } else {
-        alert("Failed: " + response.data.message);
+        // alert("Failed: " + response.data.message);
+        toast.error("Failed: " + response.data.message)
       }
     } catch (err) {
       console.error(err);
-      alert("Error submitting report");
+      // alert("Error submitting report");
+      toast.error("Error submitting report")
     }
   }
 

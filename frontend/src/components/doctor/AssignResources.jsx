@@ -1,8 +1,15 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo,useContext, useEffect } from 'react'
 import hospitalsData from '../../../../ML/hospitals.json'
+import axios from 'axios'
+import { DoctorContext } from '../../contexts/DoctorContext'
+import { toast } from 'react-toastify'
+
+
 
 function AssignResources() {
   const [searchTerm, setSearchTerm] = useState("")
+  const {dToken} = useContext(DoctorContext)
+  const [hospitalBedsData, setHospitalBedsData] = useState([])
 
   const filteredHospitals = useMemo(() => {
     if (!searchTerm) return hospitalsData.hospitals
@@ -14,6 +21,24 @@ function AssignResources() {
       hospital.location.toLowerCase().includes(searchLower)
     )
   }, [searchTerm])
+
+  const getAllHospitalBeds = async () => {
+    try {
+      const {data} = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/get-all-hospital-beds`, { headers: { dtoken: dToken } })
+      if (!data.success) {
+        toast.error("Failed to fetch hospital beds data. Please try again later. Error: " + data.message)
+        return
+      }
+      console.log("hospital beds data from backend is : ", data.data)
+      setHospitalBedsData(data.data)
+    } catch (error) {
+      console.error("Error fetching hospital beds data:", error)
+      toast.error("Failed to fetch hospital beds data. Please try again later.")
+    }
+  }
+  useEffect(() => {
+    getAllHospitalBeds()
+  }, [])
 
   const getBedStatusColor = (available, total) => {
     const percentage = (available / total) * 100

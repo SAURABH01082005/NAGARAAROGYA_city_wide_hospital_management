@@ -12,6 +12,7 @@ import reportModel from "../models/reportModel";
 import referenceModel from "../models/referenceModel";
 import { sendInfoConfirmationEmail, sendVerificationEamil } from '../contollers/email/emailController'
 import pendingDoctorModel from "../models/pendingDoctorModel";
+import e from "express";
 
 
 
@@ -303,4 +304,57 @@ const resendOTP = async (req: Request, res: Response) => {
     }
 }
 
-export { login, register, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP }
+const getAllHospitalBeds = async (req: Request, res: Response) => {
+    //getting all hospitals
+    try {
+        const hospitals = await hospitalModel.find({}).select("+password")
+
+        let hospitalBedsData = await Promise.all(hospitals.map(async (hospital) => {
+            try {
+                // console.log("fetting this link",hospital.url + "/get-all-beds"," PASSWORD IS ",hospital.password)
+                console.log("hospital data is : ", hospital)
+                const { data } = await axios.get(hospital.url + "/get-all-beds", { headers: { gtoken: jwt.sign(hospital.email + hospital.password, process.env.JWT_SECRET_GOVERNMENT as string) } })
+                console.log(` data for hospital ${hospital.hospitalId}:`, data);
+                if (data.success) {
+                    return { hospitalId: hospital.hospitalId, hospitalName: hospital.name, beds: data.beds }
+                } else {
+                    return null
+                }
+            } catch (error: any) {
+                console.error(`Error fetching beds for hospital ${hospital.hospitalId}:`);
+                // return { hospitalId: hospital.hospitalId, hospitalName: hospital.name, beds: [] }
+            }
+            return null
+            
+        }))
+
+        
+        hospitalBedsData=hospitalBedsData.filter((item)=>{
+            return item !== null  
+        })
+        hospitalBedsData.map((item)=>{
+            item?.beds.map((bed:any)=>{
+                let availalble=0;
+                let total=0;
+                let minTime =Number.MAX_VALUE ;
+                bed?.beds.map((b:any)=>{
+                    if(b.available) availalble++ , minTime = 0;
+                    else minTime =b.engageSchedule.dispatchDate -  b.engageSchedule.assignDate
+                    total ++;
+                    
+                })
+                bed.availalbe=availalble;
+                bed.total=total;
+                bed.minTime = minTime;
+            })
+        })
+        console.log("hospitalBedsData is : ", hospitalBedsData)
+        res.json({ success: true, data: hospitalBedsData } as IResponse)
+
+
+    } catch (error: any) {
+        return res.json({ success: false, message: error.message } as IResponse)
+    }
+}
+
+export { getAllHospitalBeds, login, register, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP }

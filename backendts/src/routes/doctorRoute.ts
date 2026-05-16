@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP } from "../contollers/doctorController";
+import { getAllHospitalBeds,register, login, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP } from "../contollers/doctorController";
 import authDoctor from "../middlewares/authDoctor";
 
 const doctorRoute = express.Router();
@@ -13,6 +13,7 @@ doctorRoute.get("/get-doctordetails", authDoctor, getDoctorDetail)
 doctorRoute.post("/get-appointments", authDoctor, getAppointments)
 doctorRoute.post("/add-report", authDoctor, addReport)
 doctorRoute.post("/get-report", authDoctor, getReport)
+doctorRoute.get("/get-all-hospital-beds", authDoctor, getAllHospitalBeds)
 
 
 export default doctorRoute
