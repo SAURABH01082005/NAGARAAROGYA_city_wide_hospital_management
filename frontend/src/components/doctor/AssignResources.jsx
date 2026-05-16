@@ -1,80 +1,107 @@
-import React, { useState, useMemo,useContext, useEffect } from 'react'
-import hospitalsData from '../../../../ML/hospitals.json'
+import React, { useState, useMemo, useContext, useEffect } from 'react'
 import axios from 'axios'
 import { DoctorContext } from '../../contexts/DoctorContext'
 import { toast } from 'react-toastify'
 
-
-
 function AssignResources() {
   const [searchTerm, setSearchTerm] = useState("")
-  const {dToken} = useContext(DoctorContext)
-  const [hospitalBedsData, setHospitalBedsData] = useState([])
-
-  const filteredHospitals = useMemo(() => {
-    if (!searchTerm) return hospitalsData.hospitals
-    
-    const searchLower = searchTerm.toLowerCase()
-    return hospitalsData.hospitals.filter(hospital => 
-      hospital.id.toLowerCase().includes(searchLower) || 
-      hospital.name.toLowerCase().includes(searchLower) ||
-      hospital.location.toLowerCase().includes(searchLower)
-    )
-  }, [searchTerm])
+  const { dToken } = useContext(DoctorContext)
+  const [hospitalBedData, setHospitalBedData] = useState([])
+  const [expandedBeds, setExpandedBeds] = useState({})
 
   const getAllHospitalBeds = async () => {
     try {
-      const {data} = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/get-all-hospital-beds`, { headers: { dtoken: dToken } })
+      const { data } = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/get-all-hospital-beds`, {
+        headers: { dtoken: dToken }
+      })
       if (!data.success) {
-        toast.error("Failed to fetch hospital beds data. Please try again later. Error: " + data.message)
+        toast.error("Failed to fetch hospital beds data: " + data.message)
         return
       }
-      console.log("hospital beds data from backend is : ", data.data)
-      setHospitalBedsData(data.data)
+      setHospitalBedData(data.data)
     } catch (error) {
       console.error("Error fetching hospital beds data:", error)
       toast.error("Failed to fetch hospital beds data. Please try again later.")
     }
   }
+
   useEffect(() => {
     getAllHospitalBeds()
   }, [])
 
-  const getBedStatusColor = (available, total) => {
-    const percentage = (available / total) * 100
-    if (percentage >= 50) return 'bg-green-500/20 text-green-400 border-green-500/50'
-    if (percentage >= 25) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
-    return 'bg-red-500/20 text-red-400 border-red-500/50'
+  const filteredCards = useMemo(() => {
+    if (!searchTerm) return hospitalBedData
+
+    const searchLower = searchTerm.toLowerCase()
+    return hospitalBedData
+      .map(hospital => {
+        const filteredBeds = hospital.beds.filter(bedType =>
+          bedType._id.toLowerCase().includes(searchLower) ||
+          hospital.hospitalName.toLowerCase().includes(searchLower)
+        )
+        return { ...hospital, beds: filteredBeds }
+      })
+      .filter(hospital => hospital.beds.length > 0)
+  }, [hospitalBedData, searchTerm])
+
+  const toggleBedList = (hospitalId, bedTypeId) => {
+    const key = `${hospitalId}-${bedTypeId}`
+    setExpandedBeds(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }))
   }
 
   const getOccupancyPercentage = (available, total) => {
+    if (total === 0) return 100
     return Math.round(((total - available) / total) * 100)
+  }
+
+  const getStatusColor = (percentage) => {
+    if (percentage <= 30) return 'bg-green-500'
+    if (percentage <= 60) return 'bg-yellow-500'
+    return 'bg-red-500'
+  }
+
+  const getStatusBg = (available, total) => {
+    const percentage = (available / total) * 100
+    if (percentage >= 60) return 'bg-green-500/20 text-green-400 border-green-500/50'
+    if (percentage >= 30) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
+    return 'bg-red-500/20 text-red-400 border-red-500/50'
+  }
+
+  const getAvgWaitTime = (bedType) => {
+    return bedType.minTime ? `${bedType.minTime} min` : "0 sec"
+  }
+
+  const handleRequestBed = (hospitalId, bedTypeId) => {
+    toast.info(`✅ Bed Request Initiated for ${bedTypeId} at ${hospitalId}`)
   }
 
   return (
     <div className="bg-[var(--color-primary)] text-white min-h-screen py-4 px-5 md:px-8 h-[700px] overflow-y-scroll no-scrollbar lg:w-full">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between mb-6 items-end">
-          <div className="text-center">
+          <div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
-              Hospital Resources
+              Assign Hospital Resources
             </h2>
-            <p className="text-gray-400 text-sm mt-2">Monitor bed availability across all hospitals</p>
+            <p className="text-gray-400 text-sm mt-2">Request beds from hospitals</p>
           </div>
         </div>
 
+        {/* Search Bar */}
         <div className="bg-gray-900/70 backdrop-blur-md border border-gray-800/80 rounded-2xl shadow-xl shadow-black/40 p-5 md:p-6 mb-10">
           <div className="max-w-2xl mx-auto">
             <div className="relative">
               <input
-                id="search"
                 onChange={(e) => setSearchTerm(e.target.value)}
                 value={searchTerm}
                 type="text"
-                placeholder="Search by hospital ID, name, or location..."
-                className="w-full bg-gray-800/80 border border-gray-700 text-white placeholder-gray-400 rounded-xl pl-5 pr-12 py-3 focus:outline-none focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all text-base"
+                placeholder="Search hospital or bed type..."
+                className="w-full bg-gray-800/80 border border-gray-700 text-white placeholder-gray-400 rounded-xl pl-5 pr-12 py-3 focus:outline-none focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)] transition-all"
               />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-secondary)] hover:text-blue-300 transition-colors">
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-secondary)]">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -83,104 +110,109 @@ function AssignResources() {
           </div>
         </div>
 
-        <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/70 rounded-2xl shadow-2xl shadow-black/50 p-6 md:p-8 lg:p-10">
-          {filteredHospitals.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-              {filteredHospitals.map((hospital) => (
-                <div key={hospital.id} className="bg-gray-800/80 border border-gray-700/80 rounded-2xl shadow-lg p-6 hover:border-[var(--color-secondary)]/50 transition-all group">
-                  {/* Header Section */}
-                  <div className="flex justify-between items-start mb-5 pb-4 border-b border-gray-700/50">
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-gray-100 truncate" title={hospital.name}>{hospital.name}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">{hospital.id}</span>
-                        <span className="text-xs text-gray-400">• {hospital.location}</span>
-                      </div>
-                    </div>
-                    {hospital.emergency && (
-                      <span className="text-xs uppercase font-bold tracking-wider px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg">
-                        Emergency
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Overall Beds Status */}
+        <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/70 rounded-2xl shadow-2xl shadow-black/50 p-6 md:p-8">
+          {filteredCards.length > 0 ? (
+            <div className="space-y-12">
+              {filteredCards.map((hospital) => (
+                <div key={hospital.hospitalId}>
+                  {/* Hospital Header */}
                   <div className="mb-6">
-                    <div className="flex justify-between items-center mb-3">
-                      <div>
-                        <span className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1 block">Total Beds</span>
-                        <span className="text-2xl font-bold text-gray-100">{hospital.availableBeds}/{hospital.totalBeds}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1 block">Occupancy</span>
-                        <span className={`text-lg font-bold px-3 py-1 rounded-lg border ${getBedStatusColor(hospital.availableBeds, hospital.totalBeds)}`}>
-                          {getOccupancyPercentage(hospital.availableBeds, hospital.totalBeds)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="w-full bg-gray-900/50 border border-gray-700/50 rounded-lg h-2 overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-[var(--color-secondary)] to-blue-400 transition-all duration-500"
-                        style={{ width: `${getOccupancyPercentage(hospital.availableBeds, hospital.totalBeds)}%` }}
-                      ></div>
-                    </div>
+                    <h3 className="text-2xl font-bold">{hospital.hospitalName}</h3>
+                    <p className="text-gray-400 text-sm">{hospital.hospitalId}</p>
                   </div>
 
-                  {/* ICU Section */}
-                  <div className="mb-4 p-4 bg-gray-900/40 border border-gray-700/40 rounded-xl">
-                    <div className="flex items-center gap-2 mb-3">
-                      <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                      <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">ICU Beds</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-semibold text-gray-200">{hospital.icu.available}/{hospital.icu.total}</span>
-                      <span className={`text-xs font-bold px-2 py-1 rounded border ${getBedStatusColor(hospital.icu.available, hospital.icu.total)}`}>
-                        {Math.round(((hospital.icu.total - hospital.icu.available) / hospital.icu.total) * 100)}%
-                      </span>
-                    </div>
+                  {/* Bed Type Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {hospital.beds.map((bedType) => {
+                      const occupancy = getOccupancyPercentage(bedType.availalbe, bedType.total)
+                      const isExpanded = expandedBeds[`${hospital.hospitalId}-${bedType._id}`]
+
+                      return (
+                        <div
+                          key={bedType._id}
+                          className="bg-gray-800/80 border border-gray-700/80 rounded-2xl p-6 flex flex-col h-[420px] hover:border-[var(--color-secondary)]/50 transition-all"
+                        >
+                          {/* Header */}
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <span className="uppercase text-xs tracking-widest font-semibold text-gray-400">
+                                {bedType._id.replace(/_/g, ' ').toUpperCase()}
+                              </span>
+                              <div className="text-4xl font-bold mt-2">
+                                {bedType.availalbe} <span className="text-lg font-normal text-gray-400">/ {bedType.total}</span>
+                              </div>
+                            </div>
+
+                            <div className={`px-4 py-1.5 rounded-xl text-sm font-bold border ${getStatusBg(bedType.availalbe, bedType.total)}`}>
+                              {occupancy}%
+                            </div>
+                          </div>
+
+                          {/* Occupancy Progress Bar */}
+                          <div className="mb-6">
+                            <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+                              <span>Available</span>
+                              <span>Occupied</span>
+                            </div>
+                            <div className="w-full bg-gray-900 rounded-full h-2.5 overflow-hidden">
+                              <div
+                                className={`h-2.5 rounded-full transition-all duration-500 ${getStatusColor(occupancy)}`}
+                                style={{ width: `${occupancy}%` }}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* Average Wait Time */}
+                          <div className="mb-6">
+                            <span className="text-xs text-gray-400 block">Avg. Waiting Time</span>
+                            <span className="text-lg font-semibold text-[var(--color-secondary)]">
+                              {getAvgWaitTime(bedType)}
+                            </span>
+                          </div>
+
+                          {/* View Beds Dropdown */}
+                          <button
+                            onClick={() => toggleBedList(hospital.hospitalId, bedType._id)}
+                            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white mb-4 transition-colors"
+                          >
+                            <span>{isExpanded ? 'Hide' : 'View'} Individual Beds</span>
+                            <span className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
+                          </button>
+
+                          {/* Expandable Bed List */}
+                          {isExpanded && (
+                            <div className="bg-gray-900/50 rounded-xl p-3 max-h-28 overflow-y-auto mb-6 text-sm font-mono space-y-1">
+                              {bedType.beds.map((bed) => (
+                                <div key={bed.bedId} className="flex justify-between">
+                                  <span>{bed.bedId}</span>
+                                  <span className={bed.available ? 'text-green-400' : 'text-red-400'}>
+                                    {bed.available ? 'Available' : 'Occupied'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Request Button */}
+                          <button
+                            onClick={() => handleRequestBed(hospital.hospitalId, bedType._id)}
+                            disabled={bedType.availalbe === 0}
+                            className="mt-auto w-full py-3.5 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-[var(--color-secondary)] hover:bg-blue-600 active:scale-[0.98]"
+                          >
+                            {bedType.availalbe > 0 ? 'Request Bed' : 'No Beds Available'}
+                          </button>
+                        </div>
+                      )
+                    })}
                   </div>
 
-                  {/* Ward Section */}
-                  <div className="mb-6 p-4 bg-gray-900/40 border border-gray-700/40 rounded-xl">
-                    <div className="flex items-center gap-2 mb-3">
-                      <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                      </svg>
-                      <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Ward Beds</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-semibold text-gray-200">{hospital.ward.available}/{hospital.ward.total}</span>
-                      <span className={`text-xs font-bold px-2 py-1 rounded border ${getBedStatusColor(hospital.ward.available, hospital.ward.total)}`}>
-                        {Math.round(((hospital.ward.total - hospital.ward.available) / hospital.ward.total) * 100)}%
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Additional Info */}
-                  <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-700/50">
-                    <div className="bg-gray-900/50 p-3 rounded-lg">
-                      <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">Avg Wait Time</span>
-                      <span className="text-sm font-semibold text-[var(--color-secondary)]">{hospital.avgWaitTime} min</span>
-                    </div>
-                    <div className="bg-gray-900/50 p-3 rounded-lg">
-                      <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">Queue Length</span>
-                      <span className="text-sm font-semibold text-[var(--color-secondary)]">{hospital.queueLength}</span>
-                    </div>
-                  </div>
+                  <hr className="border-gray-700/70 mt-12" />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-gray-800/30 rounded-2xl border border-gray-800 border-dashed">
-              <svg className="w-16 h-16 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path>
-              </svg>
-              <h3 className="text-2xl font-medium text-gray-400">No hospitals found</h3>
-              <p className="text-gray-500 mt-2">Try searching with a different hospital ID, name, or location.</p>
+            <div className="text-center py-24 text-gray-400">
+              No matching hospitals or bed types found.
             </div>
           )}
         </div>
