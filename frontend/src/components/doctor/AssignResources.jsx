@@ -103,7 +103,7 @@ const [formData, setFormData] = useState({
   }
 
   const getAvgWaitTime = (bedType) => {
-    return bedType.minTime ? `${bedType.minTime} min` : "0 sec"
+    return bedType.minTime ? `${bedType.minTimeString} ` : "0 sec"
   }
 
   const handleRequestBed = (hospitalId, bedTypeId) => {
