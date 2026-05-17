@@ -214,9 +214,12 @@ const deletePatientFromBedQueue = async (req: Request, res: Response) => {
             referToHospitalId: data.hospitalId,
             report: [],
         })
-        await patientModel.updateOne({ "patientDetail.email": NApatientEmail, "appointment._id": latestAppointment }, { $push: { "appointment.$.referenceData": {"reference":referenceData._id} } })
+        const updatePatient  = await patientModel.updateOne({ "patientDetail.email": NApatientEmail, "appointment._id": latestAppointment }, { $push: { "appointment.$.referenceData": {"reference":referenceData._id} } })
+        if(!updatePatient){
+            return res.json({ success: false, message: "Failed to update patient appointment" } as IResponse)
+        }
 
-        sendInfoConfirmationEmail(NApatientEmail, `Hello Mr./Ms. ${NApatientEmail} you have been removed from the bed queue for bed type ${bedType}. Please contact the hospital ${data.hospitalId} and doctor ${data.NAdoctorEmail} for more details.`)
+        sendInfoConfirmationEmail(NApatientEmail, `Hello Mr./Ms. ${NApatientEmail} you have been removed from the bed queue for bed type ${bedType}.You have been alloted bed. Please contact the hospital ${data.hospitalId} and doctor ${data.NAdoctorEmail} for more details.`)
         sendInfoConfirmationEmail(data.NAdoctorEmail, `Hello Doctor ${data.NAdoctorEmail} patient with email ${NApatientEmail} has been removed from the bed queue for bed type ${bedType} in your hospital. Please contact the hospital for more details.`)
         res.json({ success: true, message: "Patient removed from bed queue" } as IResponse)
     } catch (error: any) {

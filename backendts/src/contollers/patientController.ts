@@ -170,7 +170,10 @@ const login = async (req: Request, res: Response) => {
     console.log("login function is called")
     try {
         const { email, password } = req.body;
+
         console.log(email, password)
+        console.log("email:", JSON.stringify(email))
+console.log("length:", email.length)
         if (!email || !password) {
             return res.json({ success: false, message: "Email and password are required for login" } as IResponse);
         }
@@ -178,6 +181,8 @@ const login = async (req: Request, res: Response) => {
             return res.json({ success: false, message: "Invalid email format" } as IResponse);
         }
         const data = await patientModel.findOne({ 'patientDetail.email': email }).select("+patientDetail.password");
+        const data2 = await patientModel.find({})
+        console.log("data from database from login function", data)
         if (!data) {
             return res.json({ success: false, message: "Invalid credentials for Patient" } as IResponse);
         }
@@ -192,7 +197,7 @@ const login = async (req: Request, res: Response) => {
         console.log("isMatch", isMatch)
 
         if (!isMatch) {
-            return res.status(401).json({ success: false, message: "Invalid credentials for Patient" });
+            return res.status(200).json({ success: false, message: "Invalid credentials for Patient" });
         }
 
         const ptoken = jwt.sign({ patientId: data._id }, process.env.JWT_SECRET_PATIENT as string);

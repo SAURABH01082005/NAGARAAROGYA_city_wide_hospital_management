@@ -208,7 +208,7 @@ const addReport = async (req: Request, res: Response) => {
         patientData?.appointment[0]?.referenceData?.sort((a: any, b: any) => {
             return b.createdAt.getTime() - a.createdAt.getTime();
         })
-        const referenceId = patientData?.appointment[0]?.referenceData?.[0]?.reference
+        const referenceId = patientData?.appointment[0]?.referenceData[0]?.reference
         const refData = await referenceModel.findOneAndUpdate(
             { _id: referenceId },
             { $push: { report: reportData._id } },
