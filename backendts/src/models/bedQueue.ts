@@ -37,9 +37,9 @@ const bedQueueSchema = new Schema<IbedQueue>({
     }
 },{ minimize: false, timestamps: true })
 
-const bedQueueModel: Model<IbedQueue> = models.bedQueueModel || model<IbedQueue>("bedQueue", bedQueueSchema)
 
-bedQueueSchema.pre('save', async function (next) {
+bedQueueSchema.pre('save', async function () {
+    console.log("Pre save hook of bedQueueSchema called")
     //adding data to hospital bedqueue
     try{
         const hospital = await hospitalModel.findOne({hospitalId:this.hospitalId}).select("+password")
@@ -55,6 +55,7 @@ bedQueueSchema.pre('save', async function (next) {
     if(!data.success){
          throw new Error("Failed to add to hospital bed queue")
     }
+    console.log("Pre save hook of bedQueueSchema called ended successfully")
     return
         
     }catch(error:any){
@@ -62,13 +63,19 @@ bedQueueSchema.pre('save', async function (next) {
     }
 })
 
-bedQueueSchema.post('save', async function (doc, next) {
+bedQueueSchema.post('save', async function (doc) {
+    console.log("Post save hook of bedQueueSchema called")
     //send email to patient and doctor about bed queue status
     try{
         await sendInfoConfirmationEmail(doc.NApatientEmail, `Bed Queue Status, Your request to join the bed queue has been received. Reques is made by doctor email ${doc.NAdoctorEmail}. We will notify you once a bed is available.   `)
         await sendInfoConfirmationEmail(doc.NAdoctorEmail, `Bed Queue Status, A new patient email ${doc.NApatientEmail} has requested a bed in your hospital.`)
+        console.log("Post save hook of bedQueueSchema called ended successfully")
     }catch(error:any){
         console.log("Error in post save hook of bedQueueSchema")
     }
 })
+
+const bedQueueModel: Model<IbedQueue> = models.bedQueueModel || model<IbedQueue>("bedQueue", bedQueueSchema)
+
+
 export default bedQueueModel

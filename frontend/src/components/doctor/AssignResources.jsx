@@ -9,10 +9,12 @@ function AssignResources() {
   const [hospitalBedData, setHospitalBedData] = useState([])
   const [expandedBeds, setExpandedBeds] = useState({})
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 const [selectedHospitalId, setSelectedHospitalId] = useState(null);
 const [selectedBedType, setSelectedBedType] = useState(null);
 
 const [formData, setFormData] = useState({
+  patientEmail: '',
   age: '',
   gender: 'Male',
   condition: '',
@@ -107,14 +109,86 @@ const [formData, setFormData] = useState({
   const handleRequestBed = (hospitalId, bedTypeId) => {
     setSelectedHospitalId(hospitalId);
     setSelectedBedType(bedTypeId);
-    setFormData({ age: '', gender: 'Male', condition: '', procedure: '' }); // Reset form
+    setFormData({ patientEmail: '', age: '', gender: 'Male', condition: '', procedure: '' }); // Reset form
     setShowRequestModal(true);
   }
 
-  const handleFormSubmit = () => {
-//use ml to get bed score by sending waiting time 0 min
+  const handleFormSubmit = async () => {
+    const age = Number(formData.age)
+    const patientEmail = formData.patientEmail.trim()
+    const condition = formData.condition.trim()
+    const procedure = formData.procedure.trim()
+    const doctorEmail = doctorData?.doctorDetail?.email
+    const mlBaseUrl = (import.meta.env.VITE_APP_ML_URL || "http://127.0.0.1:5555").replace(/\/$/, "")
 
+    if (!selectedHospitalId || !selectedBedType) {
+      toast.error("Please select a hospital bed first")
+      return
+    }
+    if (!patientEmail) {
+      toast.error("Patient email is required")
+      return
+    }
+    if (!doctorEmail) {
+      toast.error("Doctor profile is still loading. Please try again.")
+      return
+    }
+    if (formData.age === '' || !Number.isFinite(age) || age < 0 || age > 120) {
+      toast.error("Enter a valid patient age")
+      return
+    }
+    if (!condition) {
+      toast.error("Condition / diagnosis is required")
+      return
+    }
 
+    try {
+      setIsSubmitting(true)
+
+      const { data: mlData } = await axios.post(`${mlBaseUrl}/api/bed/allocate`, {
+        age,
+        gender: formData.gender,
+        condition,
+        procedure,
+        waiting_time: 0,
+        hospitalId: selectedHospitalId,
+        bedType: selectedBedType
+      })
+
+      const bedScore = Number(mlData?.score)
+      if (!Number.isFinite(bedScore)) {
+        throw new Error("ML did not return a valid bed score")
+      }
+
+      console.log("ML bed score:", bedScore, mlData)
+
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/bed-queue`,
+        {
+          bedType: selectedBedType,
+          hospitalId: selectedHospitalId,
+          NApatientEmail: patientEmail,
+          NAdoctorEmail: doctorEmail,
+          bedScore
+        },
+        { headers: { dtoken: dToken } }
+      )
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to add patient to bed queue")
+        return
+      }
+
+      toast.success(`Bed request submitted. ML bed score: ${bedScore}`)
+      setShowRequestModal(false)
+      setFormData({ patientEmail: '', age: '', gender: 'Male', condition: '', procedure: '' })
+      await getAllHospitalBeds()
+    } catch (error) {
+      console.error("Error submitting bed request:", error)
+      toast.error(error.response?.data?.message || error.response?.data?.error || error.message || "Failed to submit bed request")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
   return (
     <div className="bg-[var(--color-primary)] text-white min-h-screen py-4 px-5 md:px-8 h-[700px] overflow-y-scroll no-scrollbar lg:w-full">
@@ -302,6 +376,17 @@ const [formData, setFormData] = useState({
     
       <div className="p-6 space-y-6">
         <div>
+          <label className="block text-sm text-gray-400 mb-2">Patient Email</label>
+          <input
+            type="email"
+            value={formData.patientEmail}
+            onChange={(e) => setFormData({ ...formData, patientEmail: e.target.value })}
+            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--color-secondary)]"
+            placeholder="patient@example.com"
+          />
+        </div>
+
+        <div>
           <label className="block text-sm text-gray-400 mb-2">Patient Age</label>
           <input
             type="number"
@@ -323,7 +408,7 @@ const [formData, setFormData] = useState({
           >
             <option value="Male">Male</option>
             <option value="Female">Female</option>
-            <option value="Trans">Trans</option>
+            <option value="Other">Other</option>
           </select>
         </div>
 
@@ -353,27 +438,18 @@ const [formData, setFormData] = useState({
         <button
           onClick={() => {
             setShowRequestModal(false);
-            handleFormSubmit();
           }}
+          disabled={isSubmitting}
           className="flex-1 py-3.5 rounded-2xl font-semibold border border-gray-700 hover:bg-gray-800 transition-all"
         >
           Cancel
         </button>
         <button
-          onClick={() => {
-            // Handle form submission here
-            console.log("Request Submitted:", {
-              hospitalId: selectedHospitalId,
-              bedType: selectedBedType,
-              ...formData
-            });
-            
-            alert("Bed request submitted successfully!"); // Replace with actual API call
-            setShowRequestModal(false);
-          }}
-          className="flex-1 py-3.5 rounded-2xl font-semibold bg-[var(--color-secondary)] hover:bg-blue-600 active:scale-[0.98] transition-all"
+          onClick={handleFormSubmit}
+          disabled={isSubmitting}
+          className="flex-1 py-3.5 rounded-2xl font-semibold bg-[var(--color-secondary)] hover:bg-blue-600 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Submit Request
+          {isSubmitting ? "Submitting..." : "Submit Request"}
         </button>
       </div>
     </div>

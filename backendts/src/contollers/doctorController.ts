@@ -361,6 +361,30 @@ const bedQueue = async (req: Request, res: Response) => {
     }
 }
 
+const getBedQueue = async (req: Request, res: Response) => {
+    const hospitalId = (req.body?.hospitalId || req.query.hospitalId) as string | undefined
+    try{
+        if(!hospitalId){
+             const data = await bedQueueModel.find({})
+             if(!data){
+                return res.json({ success: false, message: "Failed to get bed queue" } as IResponse)
+             }
+            return res.json({ success: true, message: "All Hospial Data", data: data } as IResponse)
+        }
+    }catch(error:any){
+        return res.json({ success: false, message: error.message } as IResponse)
+    }
+    try {
+        const data = await bedQueueModel.find({ hospitalId: hospitalId })
+        if(!data){
+            return res.json({ success: false, message: "Failed to get bed queue" } as IResponse)
+        }
+        res.json({ success: true, data: data } as IResponse)
+    } catch (error: any) {
+        return res.json({ success: false, message: error.message } as IResponse)
+    }
+}
 
 
-export {bedQueue, getAllHospitalBeds, login, register, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP }
+
+export {getBedQueue,bedQueue, getAllHospitalBeds, login, register, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP }
