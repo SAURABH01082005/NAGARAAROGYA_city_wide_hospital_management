@@ -12,6 +12,7 @@ import { sendInfoConfirmationEmail } from '../contollers/email/emailController'
 import generatePassword from 'generate-password';
 import bcrypt from 'bcryptjs'
 import bedQueueModel from '../models/bedQueue'
+import doctorModel from '../models/doctorModel'
 
 
 interface Iappointment {
@@ -176,6 +177,45 @@ const deletePatientFromBedQueue = async (req: Request, res: Response) => {
         if (!data) {
             return res.json({ success: false, message: "Patient not found in bed queue" } as IResponse)
         }
+
+        //updating appointment latest
+        const patient:any = await patientModel.findOne({ "patientDetail.email": NApatientEmail })
+    
+        if (!patient) {
+            return res.json({ success: false, message: "Patient not found" } as IResponse)
+        }
+        if(patient.appointment.length == 0){
+            return res.json({ success: false, message: "No appointment found for patient" } as IResponse)
+        }
+        patient.appointment.sort((a:any, b:any) => {
+            return b.createdAt.getTime() - a.createdAt.getTime();
+        });
+
+        if(patient.appointment[0].referenceData.length == 0){
+            return res.json({ success: false, message: "No reference data found for patient appointment" } as IResponse)
+        }
+       
+            patient.appointment[0].referenceData.sort((a:any, b:any) => { 
+                //sort by timestamp of reference data
+                 return b.createdAt.getTime() - a.createdAt.getTime()
+            });
+        
+        const latestAppointment = patient.appointment[0]?._id;//showing error on _id
+        if(!latestAppointment){
+            return res.json({ success: false, message: "No appointment found for patient" } as IResponse)
+        }
+        const  doctorData = await doctorModel.findOne({ email: data.NAdoctorEmail }).select("hospitalId _id")
+        if(!doctorData){
+            return res.json({ success: false, message: "Doctor not found" } as IResponse)
+        }
+        const referenceData = await referenceModel.create({
+            hospitalId: doctorData.doctorDetail.hospitalId,
+            docId: doctorData._id.toString(),
+            referToHospitalId: data.hospitalId,
+            report: [],
+        })
+        await patientModel.updateOne({ "patientDetail.email": NApatientEmail, "appointment._id": latestAppointment }, { $push: { "appointment.$.referenceData": {"reference":referenceData._id} } })
+
         sendInfoConfirmationEmail(NApatientEmail, `Hello Mr./Ms. ${NApatientEmail} you have been removed from the bed queue for bed type ${bedType}. Please contact the hospital ${data.hospitalId} and doctor ${data.NAdoctorEmail} for more details.`)
         sendInfoConfirmationEmail(data.NAdoctorEmail, `Hello Doctor ${data.NAdoctorEmail} patient with email ${NApatientEmail} has been removed from the bed queue for bed type ${bedType} in your hospital. Please contact the hospital for more details.`)
         res.json({ success: true, message: "Patient removed from bed queue" } as IResponse)

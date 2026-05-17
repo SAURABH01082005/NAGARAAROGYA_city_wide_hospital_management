@@ -26,7 +26,6 @@ const bedQueueSchema = new Schema<IbedQueue>({
         type: Number,
         required: true
     },
-    
     NApatientEmail: {
         type: String,
         required: true

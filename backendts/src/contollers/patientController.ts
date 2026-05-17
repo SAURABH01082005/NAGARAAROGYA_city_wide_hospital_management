@@ -182,13 +182,14 @@ const login = async (req: Request, res: Response) => {
             return res.json({ success: false, message: "Invalid credentials for Patient" } as IResponse);
         }
 
-        sendWelcomeEmail(email, data.patientDetail.name)
+       
 
 
         //decrypting hassed password form database
 
 
         const isMatch = await bcrypt.compare(password, data.patientDetail.password);
+        console.log("isMatch", isMatch)
 
         if (!isMatch) {
             return res.status(401).json({ success: false, message: "Invalid credentials for Patient" });

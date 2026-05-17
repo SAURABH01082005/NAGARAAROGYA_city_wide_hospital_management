@@ -386,5 +386,28 @@ const getBedQueue = async (req: Request, res: Response) => {
 }
 
 
+const completeAppointment = async (req: Request, res: Response) => {
+    const { appointmentRef, patientEmail, doctorEmail, hospitalId } = req.body
+    try {
+        if (!appointmentRef) {
+            return res.json({ success: false, message: "Appointment ID is required" } as IResponse)
+        }
+        const appointmentData = await ipdAppointmentModel.findOne({appointmentRef})
+        if (!appointmentData) {
+            return res.json({ success: false, message: "IPDAppointment not found" } as IResponse)
+        }
+        appointmentData.isCompleted = true
+        await appointmentData.save()
+        const patientModelData = await patientModel.findOneAndUpdate({ "appointment._id": appointmentRef }, { $set: { "appointment.$.isCompleted": true } })
+        if(!patientModelData){
+            return res.json({ success: false, message: "Failed to update patient appointment data" } as IResponse)
+        }
+            sendInfoConfirmationEmail(patientEmail, `Your appointment with reference ${appointmentRef} is marked as completed by doctor ${doctorEmail} from hospital ${hospitalId}. Thank you for using NagarAarogya.`);
+        res.json({ success: true, message: "Appointment completed" } as IResponse)
+    } catch (error: any) {
+        return res.json({ success: false, message: error.message } as IResponse)
+    }
+}
 
-export {getBedQueue,bedQueue, getAllHospitalBeds, login, register, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP }
+
+export {completeAppointment,getBedQueue,bedQueue, getAllHospitalBeds, login, register, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP }

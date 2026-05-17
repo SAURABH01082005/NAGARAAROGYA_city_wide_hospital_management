@@ -1,5 +1,5 @@
 import express from "express";
-import {getBedQueue,bedQueue, getAllHospitalBeds,register, login, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP } from "../contollers/doctorController";
+import {completeAppointment,getBedQueue,bedQueue, getAllHospitalBeds,register, login, getDoctorDetail, getAppointments, addReport, getReport, verifyEmail, resendOTP } from "../contollers/doctorController";
 import authDoctor from "../middlewares/authDoctor";
 
 const doctorRoute = express.Router();
@@ -16,6 +16,7 @@ doctorRoute.post("/get-report", authDoctor, getReport)
 doctorRoute.get("/get-all-hospital-beds", authDoctor, getAllHospitalBeds)
 doctorRoute.post("/bed-queue",authDoctor,bedQueue)
 doctorRoute.get("/get-bed-queue",authDoctor,getBedQueue)
+doctorRoute.post("/complete-appointment",authDoctor,completeAppointment)
 
 
 

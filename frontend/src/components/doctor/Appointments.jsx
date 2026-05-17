@@ -1,12 +1,14 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import axios from 'axios';
 import { DoctorContext } from '../../contexts/DoctorContext';
 import { toast } from 'react-toastify'
 
+const TODAY = new Date();
+
 
 function Appointments() {
 
-  const { dToken, doctorData, getDoctorDetails } = useContext(DoctorContext)
+  const { dToken, doctorData } = useContext(DoctorContext)
   const [searchTerm, setSearchTerm] = useState("");
   const [appointments, setAppointments] = useState([]);
 
@@ -32,7 +34,7 @@ function Appointments() {
   const calculateAge = (dobString) => {
     if (!dobString) return "N/A";
     const dob = new Date(dobString);
-    const diff_ms = Date.now() - dob.getTime();
+    const diff_ms = TODAY.getTime() - dob.getTime();
     const age_dt = new Date(diff_ms);
     return Math.abs(age_dt.getUTCFullYear() - 1970);
   }
@@ -44,23 +46,26 @@ function Appointments() {
     return patientName.toLowerCase().includes(searchLower);
   });
 
-  const getAppointments = async () => {
+  const getAppointments = useCallback(async () => {
     try {
       console.log("doctor data is ******************************** ", doctorData)
       const { data } = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/get-appointments`, { doctorData }, { headers: { dtoken: dToken } })
       if (data.success) {
-        setAppointments(data.data);
+        setAppointments(data.data.reverse());
       }
     } catch (err) {
       console.error(err);
     }
-  }
+  }, [dToken, doctorData])
 
   useEffect(() => {
     if (doctorData) {
-      getAppointments()
+      const timeoutId = setTimeout(() => {
+        getAppointments()
+      }, 0)
+      return () => clearTimeout(timeoutId)
     }
-  }, [doctorData])
+  }, [doctorData, getAppointments])
 
 
 
@@ -414,6 +419,20 @@ function Appointments() {
       );
     }
 
+    const handleReleasePatient = async (appointmentData) => {
+      console.log("Releasing patient for appointmentData : ", appointmentData)
+      //appointment model mein isCompleted :true karna hai
+      const {data} = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/doctor/complete-appointment`, { appointmentRef: appointmentData.appointmentRef, patientEmail:appointmentData.patientRef.patientDetail.email,doctorEmail:doctorData.doctorDetail.email,hospitalId: doctorData.doctorDetail.hospitalId }, { headers: { dtoken: dToken } })
+      if(!data.success){
+        toast.error("Failed to release patient: " + data.message)
+        return
+      }
+        toast.success("Patient released successfully: " + data.message)
+        getAppointments();
+        setOpenTabs(prev => prev.filter(tab => tab.id !== activeTab))
+        setActiveTab('main')
+    }
+
     // Render View View
     return (
       <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/70 rounded-2xl shadow-2xl shadow-black/50 p-6 md:p-8 lg:p-10 min-h-[60vh] animate-fadeIn">
@@ -463,12 +482,37 @@ function Appointments() {
               <p className="text-gray-400 text-sm">Age: <span className="text-gray-200">{calculateAge(activeTabData.patientRef?.patientDetail?.dob)}</span></p>
               <p className="text-gray-400 text-sm">Admitted: <span className="text-gray-200">{new Date(activeTabData.createdAt).toLocaleDateString()}</span></p>
             </div>
-            <button
-              onClick={() => handleAddReport(activeTabData)}
-              className="flex items-center gap-2 bg-[var(--color-secondary)] hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-black/20">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-              Add Report
-            </button>
+            <div className="flex gap-3">
+             <button
+    onClick={() => handleReleasePatient(activeTabData)}
+    disabled={activeTabData?.isCompleted}
+    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg
+        ${activeTabData?.isCompleted 
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' 
+            : 'bg-[var(--color-secondary)] hover:bg-blue-600 text-white shadow-black/20'
+        }`}
+>
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+    </svg>
+    Release Patient
+</button>
+
+<button
+    onClick={() => handleAddReport(activeTabData)}
+    disabled={activeTabData?.isCompleted}
+    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg
+        ${activeTabData?.isCompleted 
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' 
+            : 'bg-[var(--color-secondary)] hover:bg-blue-600 text-white shadow-black/20'
+        }`}
+>
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+    </svg>
+    Add Report
+</button>
+            </div>
           </div>
         </div>
 
