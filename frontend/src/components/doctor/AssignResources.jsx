@@ -8,6 +8,16 @@ function AssignResources() {
   const { dToken, doctorData, getDoctorDetails } = useContext(DoctorContext)
   const [hospitalBedData, setHospitalBedData] = useState([])
   const [expandedBeds, setExpandedBeds] = useState({})
+  const [showRequestModal, setShowRequestModal] = useState(false);
+const [selectedHospitalId, setSelectedHospitalId] = useState(null);
+const [selectedBedType, setSelectedBedType] = useState(null);
+
+const [formData, setFormData] = useState({
+  age: '',
+  gender: 'Male',
+  condition: '',
+  procedure: ''
+});
 
   const getAllHospitalBeds = async () => {
     try {
@@ -95,9 +105,17 @@ function AssignResources() {
   }
 
   const handleRequestBed = (hospitalId, bedTypeId) => {
-    toast.info(`✅ Bed Request Initiated for ${bedTypeId} at ${hospitalId}`)
+    setSelectedHospitalId(hospitalId);
+    setSelectedBedType(bedTypeId);
+    setFormData({ age: '', gender: 'Male', condition: '', procedure: '' }); // Reset form
+    setShowRequestModal(true);
   }
 
+  const handleFormSubmit = () => {
+//use ml to get bed score by sending waiting time 0 min
+
+
+  }
   return (
     <div className="bg-[var(--color-primary)] text-white min-h-screen py-4 px-5 md:px-8 h-[700px] overflow-y-scroll no-scrollbar lg:w-full">
       <div className="max-w-7xl mx-auto">
@@ -260,6 +278,107 @@ function AssignResources() {
           )}
         </div>
       </div>
+      {/* Request Bed Modal */}
+{showRequestModal && (
+  <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+    <div className="bg-gray-900 border border-gray-700 rounded-3xl w-full max-w-md shadow-2xl">
+      {/* Modal Header */}
+      <div className="flex justify-between items-center border-b border-gray-700 px-6 py-5">
+        <div>
+          <h3 className="text-2xl font-bold text-white">Request Bed</h3>
+          <p className="text-gray-400 text-sm mt-1">
+            Hospital: <span className="text-[var(--color-secondary)]">{selectedHospitalId}</span>
+          </p>
+        </div>
+        <button
+          onClick={() => setShowRequestModal(false)}
+          className="text-gray-400 hover:text-white text-3xl leading-none"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Form */}
+    
+      <div className="p-6 space-y-6">
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">Patient Age</label>
+          <input
+            type="number"
+            value={formData.age}
+            onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--color-secondary)]"
+            placeholder="Enter age"
+            min="0"
+            max="120"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">Gender</label>
+          <select
+            value={formData.gender}
+            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--color-secondary)]"
+          >
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Trans">Trans</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">Condition / Diagnosis</label>
+          <textarea
+            value={formData.condition}
+            onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white h-13 resize-y focus:outline-none focus:border-[var(--color-secondary)]"
+            placeholder="eg. Heart Attack, Severe Pneumonia, etc."
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">Procedure Required</label>
+          <textarea
+            value={formData.procedure}
+            onChange={(e) => setFormData({ ...formData, procedure: e.target.value })}
+            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white h-13 resize-y focus:outline-none focus:border-[var(--color-secondary)]"
+            placeholder="e.g. Angioplasty, Intubation, etc."
+          />
+        </div>
+      </div>
+
+      {/* Footer Buttons */}
+      <div className="flex gap-3 border-t border-gray-700 p-6">
+        <button
+          onClick={() => {
+            setShowRequestModal(false);
+            handleFormSubmit();
+          }}
+          className="flex-1 py-3.5 rounded-2xl font-semibold border border-gray-700 hover:bg-gray-800 transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            // Handle form submission here
+            console.log("Request Submitted:", {
+              hospitalId: selectedHospitalId,
+              bedType: selectedBedType,
+              ...formData
+            });
+            
+            alert("Bed request submitted successfully!"); // Replace with actual API call
+            setShowRequestModal(false);
+          }}
+          className="flex-1 py-3.5 rounded-2xl font-semibold bg-[var(--color-secondary)] hover:bg-blue-600 active:scale-[0.98] transition-all"
+        >
+          Submit Request
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   )
 }
